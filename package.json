@@ -1,0 +1,33 @@
+{
+  "name": "clean-germany",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "CLEAN – Let it shine. Moderne Website für Reinigungsservice in Deutschland (Demo).",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "framer-motion": "^12.23.0",
+    "gsap": "^3.15.0",
+    "lenis": "^1.3.0",
+    "lucide-react": "^0.546.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.9.0",
+    "recharts": "^3.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0"
+  }
+}
