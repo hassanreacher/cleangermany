@@ -6,7 +6,7 @@ const Ctx = createContext<{ theme: Theme; toggle: () => void; dir: 'ltr' | 'rtl'
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     try { const s = localStorage.getItem('clean-theme'); if (s === 'dark' || s === 'light') return s } catch { /* ignore */ }
-    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    return 'light'
   })
   const [dir, setDir] = useState<'ltr' | 'rtl'>(() => { try { return (localStorage.getItem('clean-dir') as 'rtl') || 'ltr' } catch { return 'ltr' } })
   useEffect(() => { document.documentElement.dataset.theme = theme; try { localStorage.setItem('clean-theme', theme) } catch { /* ignore */ } }, [theme])
