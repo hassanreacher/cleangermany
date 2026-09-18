@@ -11,11 +11,11 @@ export const business = {
   zip: '12307',
   city: 'Berlin',
   district: 'Berlin-Lichtenrade',
-  phoneDisplay: '+49 176 61407495',
-  phoneTel: '+4917661407495',
+  phoneDisplay: '+49 176 20465997',
+  phoneTel: '+4917620465997',
   /** WhatsApp number in international format without "+" or spaces */
-  whatsapp: '4917661407495',
-  email: 'hallo@clean-shine.de',
+  whatsapp: '4917620465997',
+  email: 'Glanzgeschwister@gmx.de',
   hours: 'Mo–Sa 08–18 Uhr',
   /** Service area: Berlin only (PLZ 10115–14199) */
   serviceArea: { name: 'Berlin', zipMin: 10115, zipMax: 14199 },
