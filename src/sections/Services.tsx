@@ -8,7 +8,7 @@ export const services = [
   { id: 'grund', icon: Sparkles, title: 'Grundreinigung', desc: 'Intensiv bis in die Ecken: Fugen, Fensterrahmen, Heizkörper, Schränke innen. Für den Frühjahrsputz oder den Neustart.', price: 'ab 149 €' },
   { id: 'umzug', icon: Truck, title: 'Umzugsreinigung', desc: 'Besenrein war gestern. Wir übergeben Ihre alte Wohnung so, wie der Vermieter sie sich wünscht – Kautionsgarantie inklusive.', price: 'ab 189 €' },
   { id: 'fenster', icon: AppWindow, title: 'Fensterreinigung', desc: 'Streifenfrei innen und außen, inklusive Rahmen und Fensterbänke. Auch für Wintergärten und Glasfassaden.', price: 'ab 49 €' },
-  { id: 'buero', icon: Building2, title: 'Büro & Praxis', desc: 'Hygienisch und diskret außerhalb Ihrer Öffnungszeiten. Mit Nachweis nach RKI-Standard für Praxen.', price: 'Angebot' },
+  { id: 'buero', icon: Building2, title: 'Büro, Praxis & Gewerbe', desc: 'Büro, Praxis, Kita, Schule, Treppenhaus, Halle & Lager – täglich, wöchentlich oder monatlich, außerhalb Ihrer Öffnungszeiten.', price: 'ab 1,30 €/m²' },
   { id: 'polster', icon: Sofa, title: 'Teppich & Polster', desc: 'Tiefenreinigung mit Sprühextraktion – Sofa, Matratze und Teppich sehen aus wie neu, ohne Chemie-Geruch.', price: 'ab 79 €' },
 ]
 
@@ -19,7 +19,7 @@ export function Services() {
         <div className="max-w-2xl">
           <Reveal><span className="eyebrow">Leistungen</span></Reveal>
           <TextReveal text="Alles, was glänzen soll." className="mt-4 text-4xl sm:text-5xl font-black" />
-          <Reveal delay={0.2}><p className="mt-4 text-muted text-lg">Sechs Leistungen, ein Anspruch: Wenn wir gehen, sieht es aus wie neu. Alle Preise verstehen sich als Festpreis nach Prüfung Ihrer Angaben.</p></Reveal>
+          <Reveal delay={0.2}><p className="mt-4 text-muted text-lg">Sechs Leistungen, ein Anspruch: Wenn wir gehen, sieht es aus wie neu. Richtwert ca. 1,30–1,45 € pro m² – Festpreis nach Prüfung Ihrer Angaben, 10–20 % Rabatt bei direktem Kontakt.</p></Reveal>
         </div>
         <motion.div variants={stagger(0.08)} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-10% 0px' }} className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {services.map(s => (

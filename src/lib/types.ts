@@ -1,6 +1,9 @@
-export type PropertyType = 'wohnung' | 'haus' | 'buero' | 'praxis'
+export type PropertyType = 'wohnung' | 'haus' | 'buero' | 'praxis' | 'kita' | 'schule' | 'treppenhaus' | 'gewerbe' | 'halle'
+export type FloorType = 'fliesen' | 'teppich' | 'pvc' | 'parkett' | 'laminat' | 'stein' | 'linoleum' | 'gemischt'
 export type CleaningType = 'unterhalt' | 'grund' | 'umzug' | 'fenster' | 'buero'
-export type Frequency = 'einmalig' | 'woechentlich' | 'zweiwoechentlich' | 'monatlich'
+/** Rhythm of the cleaning. `timesPerPeriod` holds the number of cleanings per week (woechentlich) or per month (monatlich). */
+export type Frequency = 'einmalig' | 'taeglich' | 'woechentlich' | 'zweiwoechentlich' | 'monatlich'
+export type TimeWindow = 'frueh' | 'vormittag' | 'nachmittag' | 'abend' | 'flexibel'
 
 export interface Profile {
   name: string
@@ -16,8 +19,12 @@ export interface Profile {
   floor: string
   elevator: boolean | null
   pets: boolean | null
+  floorTypes: FloorType[]
   cleaningType: CleaningType | ''
   frequency: Frequency | ''
+  /** cleanings per week (frequency = woechentlich) or per month (frequency = monatlich) */
+  timesPerPeriod: number | null
+  timeWindow: TimeWindow | ''
   extras: string[]
   notes: string
 }
@@ -54,5 +61,5 @@ export interface AppState {
 export const emptyProfile: Profile = {
   name: '', email: '', phone: '', street: '', zip: '', city: '',
   propertyType: '', sizeSqm: null, rooms: null, bathrooms: null, floor: '',
-  elevator: null, pets: null, cleaningType: '', frequency: '', extras: [], notes: '',
+  elevator: null, pets: null, floorTypes: [], cleaningType: '', frequency: '', timesPerPeriod: null, timeWindow: '', extras: [], notes: '',
 }

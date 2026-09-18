@@ -45,7 +45,7 @@ export function Navbar() {
               <Logo tagline={false} size={26} />
             </Link>
             <nav className={`hidden lg:flex items-center gap-1 text-[14px] font-semibold transition-opacity duration-300 ${open ? 'opacity-0 pointer-events-none' : ''}`}>
-              {[['/', 'Start'], ['/leistungen', 'Leistungen'], ['/#preis', 'Preisrechner'], ['/termin', 'Termin']].map(([to, label]) => (
+              {[['/', 'Start'], ['/leistungen', 'Leistungen'], ['/#preis', 'Preisrechner'], ['/termin', 'Angebot']].map(([to, label]) => (
                 <NavLink key={to} to={to} className={({ isActive }) => `px-3.5 py-2 rounded-full transition hover:bg-surface ${isActive && !to.includes('#') ? 'text-cyan-deep' : ''}`}>{label}</NavLink>
               ))}
             </nav>
@@ -58,7 +58,7 @@ export function Navbar() {
               ) : (
                 <Link to="/login" className="btn btn-ghost btn-sm hidden sm:inline-flex"><LogIn size={16} /> Anmelden</Link>
               )}
-              <Link to="/termin" className="btn btn-primary btn-sm hidden md:inline-flex">Termin buchen</Link>
+              <Link to="/termin" className="btn btn-primary btn-sm hidden md:inline-flex">Angebot anfragen</Link>
               </div>
               <button ref={btn} onClick={toggleMenu} className={`menu-toggle ${open ? 'is-open' : ''}`} aria-label={open ? 'Menü schließen' : 'Menü öffnen'} aria-expanded={open} style={{ color: open ? '#fff' : 'var(--text)' }}>
                 <span className="bar" /><span className="bar" /><span className="bar" />

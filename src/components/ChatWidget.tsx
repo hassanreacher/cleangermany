@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { MessageCircle, X, Send, Sparkles, CalendarCheck, Euro, RotateCcw } from 'lucide-react'
+import { MessageCircle, X, Send, Sparkles, CalendarCheck, Euro, RotateCcw, BadgePercent, Phone, Check } from 'lucide-react'
 import { ChatEngine, type ChatMsg } from '@/lib/chat'
 import { useStore } from '@/lib/store'
 import { formatDateDE, weekdaysShort } from '@/lib/labels'
+import { business } from '@/lib/config'
+import { WhatsAppIcon } from './WhatsAppButton'
 
-const suggestions = ['Termin buchen', 'Was kostet eine Reinigung?', 'Welche Leistungen gibt es?', 'Wann seid ihr erreichbar?']
+const suggestions = ['Angebot für mein Büro', 'Was kostet der m²?', 'Treppenhaus 3× pro Woche', 'Wie bekomme ich den Rabatt?']
 
 export function ChatWidget() {
   const [open, setOpen] = useState(false)
@@ -22,7 +24,7 @@ export function ChatWidget() {
   useEffect(() => {
     if (open && msgs.length === 0) {
       const g = profile.name ? `Hallo ${profile.name.split(' ')[0]}! ` : 'Hallo! '
-      setMsgs([{ id: 'w', role: 'assistant', content: g + 'Ich bin Clea, Ihre persönliche Assistentin von CLEAN. Ich beantworte Fragen zu unseren Leistungen und buche Ihren Reinigungstermin direkt hier im Chat – ganz ohne Formular. Womit darf ich helfen?' }])
+      setMsgs([{ id: 'w', role: 'assistant', content: `${g}Ich bin Clea von ${business.company}. Sagen Sie mir einfach, was gereinigt werden soll – z. B. „Büro, 300 m², Fliesen, 3× pro Woche“ – und ich nenne Ihnen sofort einen ungefähren Preis (ca. ${business.pricePerSqm[0].toFixed(2).replace('.', ',')}–${business.pricePerSqm[1].toFixed(2).replace('.', ',')} €/m²) und stelle Ihre Anfrage zusammen. Tipp: Nach dem Absenden per WhatsApp oder Anruf melden = ${business.directDiscount[0]}–${business.directDiscount[1]} % Rabatt.` }])
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { list.current?.scrollTo({ top: list.current.scrollHeight, behavior: 'smooth' }) }, [msgs, busy])
@@ -31,13 +33,13 @@ export function ChatWidget() {
   const send = async (text: string) => {
     const t = text.trim(); if (!t || busy) return
     setInput(''); setBusy(true)
-    setMsgs(m => [...m, { id: Math.random().toString(36).slice(2), role: 'user', content: t }])
+    setMsgs(m => [...m.filter(x => x.ui?.type !== 'options'), { id: Math.random().toString(36).slice(2), role: 'user', content: t }])
     try {
       const replies = await engine.current.send(t)
       setOffline(engine.current.offline)
       setMsgs(m => [...m, ...replies])
-    } catch (e) {
-      setMsgs(m => [...m, { id: 'err', role: 'assistant', content: 'Entschuldigung, da ist etwas schiefgelaufen. Bitte versuchen Sie es erneut.' }])
+    } catch {
+      setMsgs(m => [...m, { id: 'err' + Date.now(), role: 'assistant', content: 'Entschuldigung, da ist etwas schiefgelaufen. Bitte versuchen Sie es erneut.' }])
     } finally { setBusy(false) }
   }
   const reset = () => { engine.current = new ChatEngine(); setMsgs([]); setOffline(false); setTimeout(() => setOpen(true), 0) }
@@ -48,8 +50,8 @@ export function ChatWidget() {
       <div className="fixed z-[950] end-4 sm:end-6" style={{ bottom: 'calc(16px + var(--safe-bottom))' }}>
         <AnimatePresence>
           {hint && !open && (
-            <motion.div initial={{ opacity: 0, y: 10, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="absolute bottom-full mb-3 end-0 glass-strong rounded-2xl px-4 py-3 text-sm w-[230px] shadow-lg">
-              <b className="font-display">Hallo, ich bin Clea 👋</b><br /><span className="text-muted">Ich buche Ihren Termin im Chat.</span>
+            <motion.div initial={{ opacity: 0, y: 10, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="absolute bottom-full mb-3 end-0 glass-strong rounded-2xl px-4 py-3 text-sm w-[240px] shadow-lg">
+              <b className="font-display">Hallo, ich bin Clea 👋</b><br /><span className="text-muted">Preis in 30 Sekunden – direkt im Chat.</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -63,13 +65,13 @@ export function ChatWidget() {
       <AnimatePresence>
         {open && (
           <motion.div initial={{ opacity: 0, y: 30, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 30, scale: 0.96 }} transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-            className="fixed z-[949] inset-x-3 sm:inset-x-auto sm:end-6 sm:w-[400px] glass-strong rounded-[26px] overflow-hidden flex flex-col shadow-2xl"
-            style={{ bottom: 'calc(92px + var(--safe-bottom))', maxHeight: 'min(640px, calc(100dvh - 120px - var(--safe-bottom) - var(--safe-top)))' }} role="dialog" aria-label="Chat mit Clea">
+            className="fixed z-[949] inset-x-3 sm:inset-x-auto sm:end-6 sm:w-[410px] glass-strong rounded-[26px] overflow-hidden flex flex-col shadow-2xl"
+            style={{ bottom: 'calc(92px + var(--safe-bottom))', maxHeight: 'min(660px, calc(100dvh - 120px - var(--safe-bottom) - var(--safe-top)))' }} role="dialog" aria-label="Chat mit Clea">
             <div className="flex items-center gap-3 px-4 py-3 border-b border-line" style={{ background: 'linear-gradient(135deg, var(--cyan), var(--cyan-deep))', color: '#fff' }}>
               <div className="w-10 h-10 rounded-full bg-white/20 grid place-items-center"><Sparkles size={20} /></div>
               <div className="flex-1 min-w-0">
                 <div className="font-display font-bold leading-tight">Clea · KI-Assistentin</div>
-                <div className="text-[11px] opacity-90 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-300 inline-block" />{offline ? 'Demo-Modus (ohne Groq-Schlüssel)' : 'Online · powered by Groq'}</div>
+                <div className="text-[11px] opacity-90 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-300 inline-block" />{offline ? 'Demo-Modus (ohne Groq-Schlüssel)' : `Online · ${business.company}`}</div>
               </div>
               <button onClick={reset} className="w-9 h-9 grid place-items-center rounded-full hover:bg-white/15" aria-label="Chat zurücksetzen"><RotateCcw size={16} /></button>
               <button onClick={() => setOpen(false)} className="w-9 h-9 grid place-items-center rounded-full hover:bg-white/15" aria-label="Schließen"><X size={18} /></button>
@@ -84,7 +86,7 @@ export function ChatWidget() {
             </div>
 
             <form onSubmit={e => { e.preventDefault(); send(input) }} className="flex items-center gap-2 p-3 border-t border-line">
-              <input value={input} onChange={e => setInput(e.target.value)} placeholder="Nachricht an Clea …" className="field !min-h-[46px] !py-2 !rounded-full flex-1" aria-label="Nachricht" />
+              <input value={input} onChange={e => setInput(e.target.value)} placeholder="z. B. Büro, 300 m², 3× pro Woche …" className="field !min-h-[46px] !py-2 !rounded-full flex-1" aria-label="Nachricht" />
               <button type="submit" disabled={!input.trim() || busy} className="w-11 h-11 shrink-0 rounded-full grid place-items-center text-white disabled:opacity-40" style={{ background: 'linear-gradient(135deg, var(--cyan), var(--cyan-deep))' }} aria-label="Senden"><Send size={18} className="rtl:-scale-x-100" /></button>
             </form>
           </motion.div>
@@ -94,7 +96,27 @@ export function ChatWidget() {
   )
 }
 
+function OptionChips({ options, multi, onPick }: { options: { label: string; value: string }[]; multi?: boolean; onPick: (t: string) => void }) {
+  const [sel, setSel] = useState<string[]>([])
+  if (!multi) return <div className="flex flex-wrap gap-1.5">{options.map(o => <button key={o.value} onClick={() => onPick(o.value)} className="rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold hover:bg-cyan hover:text-white hover:border-cyan transition">{o.label}</button>)}</div>
+  return (
+    <div>
+      <div className="flex flex-wrap gap-1.5">{options.map(o => { const a = sel.includes(o.value); return <button key={o.value} onClick={() => setSel(s => (a ? s.filter(x => x !== o.value) : [...s, o.value]))} className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition inline-flex items-center gap-1 ${a ? 'bg-cyan text-white border-cyan' : 'border-line bg-surface hover:border-cyan'}`}>{a && <Check size={12} />}{o.label}</button> })}</div>
+      {sel.length > 0 && <button onClick={() => onPick(sel.join(', '))} className="mt-2 btn btn-primary btn-sm">Übernehmen ({sel.length})</button>}
+    </div>
+  )
+}
+
 function Bubble({ m, onPick }: { m: ChatMsg; onPick: (t: string) => void }) {
+  const text = m.content ? <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={`chat-bubble ${m.role === 'user' ? 'user' : 'bot'}`}>{m.content}</motion.div> : null
+  if (!m.ui) return text
+  return <>{text}<UiPart m={m} onPick={onPick} /></>
+}
+
+function UiPart({ m, onPick }: { m: ChatMsg; onPick: (t: string) => void }) {
+  if (m.ui?.type === 'options' && m.ui.options) {
+    return <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}><OptionChips options={m.ui.options} multi={m.ui.multi} onPick={onPick} /></motion.div>
+  }
   if (m.ui?.type === 'slots' && m.ui.slots) {
     return (
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-line bg-surface-strong p-3 space-y-2">
@@ -112,16 +134,37 @@ function Bubble({ m, onPick }: { m: ChatMsg; onPick: (t: string) => void }) {
     const b = m.ui.booking
     return (
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="rounded-2xl p-4 text-white" style={{ background: 'linear-gradient(135deg, var(--cyan), var(--cyan-deep))' }}>
-        <div className="flex items-center gap-2 font-display font-bold"><CalendarCheck size={18} /> Termin angefragt</div>
+        <div className="flex items-center gap-2 font-display font-bold"><CalendarCheck size={18} /> Anfrage gesendet</div>
         <div className="text-sm mt-1 opacity-95">{formatDateDE(b.date, { weekday: true })} · {b.time} Uhr</div>
-        <div className="text-xs mt-2 opacity-90">Buchungsnummer <b>{b.code}</b> · Preis wird vom Inhaber bestätigt</div>
-        <Link to="/konto" className="inline-block mt-3 text-xs font-bold underline underline-offset-4">Zu meinen Terminen →</Link>
+        <div className="text-xs mt-2 opacity-90">Anfragenummer <b>{b.code}</b> · Festpreis folgt von {business.owner}</div>
+        <div className="mt-3 rounded-xl bg-white/15 p-3 text-xs">
+          <div className="flex items-center gap-1.5 font-bold"><BadgePercent size={14} /> Jetzt {business.directDiscount[0]}–{business.directDiscount[1]} % sichern</div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <a href={b.whatsapp} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full bg-[#25d366] text-white px-3 py-1.5 font-bold"><WhatsAppIcon size={14} /> WhatsApp</a>
+            <a href={`tel:${business.phoneTel}`} className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5 font-bold"><Phone size={14} /> Anrufen</a>
+          </div>
+        </div>
+        <Link to="/konto" className="inline-block mt-3 text-xs font-bold underline underline-offset-4">Zu meinen Anfragen →</Link>
       </motion.div>
     )
   }
-  if (m.ui?.type === 'estimate' && m.ui.estimate) {
-    return <div className="rounded-2xl border border-cyan/40 bg-cyan/10 px-4 py-3 text-sm flex items-center gap-3"><Euro size={18} className="text-cyan-deep" /><div><b>{m.ui.estimate[0]}–{m.ui.estimate[1]} €</b> <span className="text-muted">unverbindliche Preisspanne</span></div></div>
+  if (m.ui?.type === 'contact' && m.ui.contact) {
+    return (
+      <div className="rounded-2xl border border-line bg-surface-strong p-3 flex flex-wrap gap-2">
+        <a href={m.ui.contact.whatsapp} target="_blank" rel="noopener noreferrer" className="btn btn-sm text-white" style={{ background: 'linear-gradient(135deg, #25d366, #128c7e)' }}><WhatsAppIcon size={15} /> WhatsApp</a>
+        <a href={`tel:${business.phoneTel}`} className="btn btn-ghost btn-sm"><Phone size={15} /> {business.phoneDisplay}</a>
+      </div>
+    )
   }
-  if (!m.content) return null
-  return <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={`chat-bubble ${m.role === 'user' ? 'user' : 'bot'}`}>{m.content}</motion.div>
+  if (m.ui?.type === 'estimate' && m.ui.estimate) {
+    const e = m.ui.estimate
+    return (
+      <div className="rounded-2xl border border-cyan/40 bg-cyan/10 px-4 py-3 text-sm space-y-1.5">
+        <div className="flex items-center gap-2"><Euro size={16} className="text-cyan-deep" /><b>{e.perCleaning[0]}–{e.perCleaning[1]} €</b> <span className="text-muted">pro Reinigung{e.sqm ? ` · ${e.sqm} m²` : ''}</span></div>
+        {e.monthly && <div className="text-muted ps-6">≈ {e.monthly[0]}–{e.monthly[1]} € pro Monat ({e.rhythm})</div>}
+        <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 ps-6 text-xs"><BadgePercent size={14} /> Mit Direkt-Rabatt ca. <b>{e.discounted[0]}–{e.discounted[1]} €</b></div>
+      </div>
+    )
+  }
+  return null
 }

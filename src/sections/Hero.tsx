@@ -19,13 +19,13 @@ export function Hero() {
     <section className="relative min-h-[100svh] flex items-center pt-28 pb-16 overflow-hidden" onPointerMove={e => { if (e.pointerType !== 'mouse') return; mx.set((e.clientX / window.innerWidth - 0.5) * 30); my.set((e.clientY / window.innerHeight - 0.5) * 30) }}>
       <div className="container-x grid lg:grid-cols-[1.15fr_1fr] gap-12 lg:gap-8 items-center">
         <div className="relative z-10">
-          <motion.span initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, ease }} className="eyebrow">Reinigungsservice · Deutschlandweit</motion.span>
+          <motion.span initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, ease }} className="eyebrow">Gewerbe- & Objektreinigung · Berlin</motion.span>
           <TextReveal as="h1" text="Sauberkeit, die man spürt." className="mt-5 text-[44px] leading-[1.02] sm:text-6xl lg:text-[76px] font-black" />
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.45, ease }} className="mt-6 max-w-xl text-lg text-muted leading-relaxed">
-            Wohnung, Haus, Büro oder Praxis – unser Team bringt alles zum Glänzen. Termin in <b className="text-text">2 Minuten</b> online buchen oder einfach mit unserer KI-Assistentin <b className="text-text">Clea</b> chatten.
+            Büro, Praxis, Kita, Schule, Treppenhaus, Gewerbe oder Zuhause – wir bringen alles zum Glänzen. Ab <b className="text-text">1,30 €/m²</b>, Angebot in <b className="text-text">2 Minuten</b> online oder im Chat mit <b className="text-text">Clea</b>. Direkt melden = <b className="text-text">10–20 % Rabatt</b>.
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.6, ease }} className="mt-8 flex flex-wrap items-center gap-3">
-            <Magnetic><Link to="/termin" className="btn btn-primary">Termin buchen <ArrowRight size={18} className="rtl:rotate-180" /></Link></Magnetic>
+            <Magnetic><Link to="/termin" className="btn btn-primary">Angebot anfragen <ArrowRight size={18} className="rtl:rotate-180" /></Link></Magnetic>
             <Magnetic strength={0.2}><a href="#clea" onClick={e => { e.preventDefault(); (document.querySelector('[aria-label="Chat mit Clea öffnen"]') as HTMLButtonElement)?.click() }} className="btn btn-ghost"><MessageCircle size={18} /> Mit Clea chatten</a></Magnetic>
           </motion.div>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9, duration: 0.8 }} className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-muted">

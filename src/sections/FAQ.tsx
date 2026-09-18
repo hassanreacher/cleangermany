@@ -3,7 +3,9 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
 import { Reveal, TextReveal } from '@/components/motion'
 export const faqs = [
-  { q: 'Wie wird der Preis festgelegt?', a: 'Sie geben Fläche, Objektart, Reinigungsart und Extras an – online oder im Chat. Daraus entsteht eine unverbindliche Spanne. Der Inhaber prüft Ihre Angaben und bestätigt anschließend einen Festpreis per E-Mail. Erst dann wird der Termin verbindlich.' },
+  { q: 'Wie wird der Preis festgelegt?', a: 'Richtwert sind ca. 1,30–1,45 € pro m² und Reinigung. Sie geben Objektart, Fläche, Bodenarten und Rhythmus an – online oder im Chat – und sehen sofort den ungefähren Preis pro Reinigung und pro Monat. Inhaberin Julia Bethke prüft Ihre Angaben und bestätigt den Festpreis.' },
+  { q: 'Wie bekomme ich die 10–20 % Direkt-Rabatt?', a: 'Ganz einfach: Anfrage online senden und sich danach direkt per WhatsApp oder Anruf bei uns melden – mit Ihrer Anfragenummer. Sie erhalten dann Ihr Angebot mit 10–20 % Rabatt.' },
+  { q: 'Welche Objekte reinigen Sie?', a: 'Büros, Praxen, Kitas, Schulen, Treppenhäuser, Gewerbeobjekte sowie Hallen und Lager – und natürlich Wohnungen und Häuser. Die Reinigungsmittel stimmen wir auf Ihre Böden ab: Fliesen, Teppich, PVC, Parkett, Laminat, Stein oder Linoleum.' },
   { q: 'Muss ich Reinigungsmittel bereitstellen?', a: 'Nein. Unser Team bringt alle Geräte und umweltfreundlichen, geruchsneutralen Mittel mit. Wenn Sie eigene Produkte wünschen, vermerken Sie das einfach in den Hinweisen.' },
   { q: 'Kann ich kurzfristig stornieren oder verschieben?', a: 'Ja, bis 24 Stunden vor dem Termin kostenlos – direkt unter „Mein Konto“ oder im Chat mit Clea.' },
   { q: 'Sind Ihre Mitarbeitenden versichert?', a: 'Selbstverständlich. Alle Teams sind fest angestellt, geschult und über unsere Betriebshaftpflicht bis 5 Mio. € versichert.' },

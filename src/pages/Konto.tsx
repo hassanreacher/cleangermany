@@ -4,7 +4,7 @@ import { CalendarCheck, MapPin, Sparkles, LogOut, Check, X, MessageCircle, UserR
 import { store, useStore, missingFields } from '@/lib/store'
 import { Badge } from '@/components/ui'
 import { Reveal } from '@/components/motion'
-import { cleaningLabels, formatDateDE, propertyLabels, statusLabels, frequencyLabels, euro } from '@/lib/labels'
+import { cleaningLabels, formatDateDE, propertyLabels, statusLabels, frequencyText, euro } from '@/lib/labels'
 import type { AppointmentStatus } from '@/lib/types'
 
 const tone: Record<AppointmentStatus, 'cyan' | 'green' | 'amber' | 'red' | 'gray'> = { anfrage: 'amber', angebot: 'cyan', bestaetigt: 'green', erledigt: 'gray', storniert: 'red' }
@@ -72,7 +72,7 @@ export default function Konto() {
               <div className="flex items-center justify-between"><h2 className="font-display font-bold">Mein Profil</h2><span className="text-xs font-bold text-cyan-deep">{pct} %</span></div>
               <div className="mt-2 h-2 rounded-full bg-line overflow-hidden"><motion.div className="h-full bg-gradient-to-r from-cyan to-cyan-deep" initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 1 }} /></div>
               <dl className="mt-4 space-y-2 text-sm">
-                {[['Name', profile.name], ['E-Mail', profile.email], ['Telefon', profile.phone], ['Adresse', profile.street ? `${profile.street}, ${profile.zip} ${profile.city}` : ''], ['Objekt', profile.propertyType ? `${propertyLabels[profile.propertyType]} · ${profile.sizeSqm ?? '?'} m² · ${profile.rooms ?? '?'} Zi.` : ''], ['Leistung', profile.cleaningType ? `${cleaningLabels[profile.cleaningType]} · ${profile.frequency ? frequencyLabels[profile.frequency] : ''}` : '']].map(([k, v]) => (
+                {[['Name', profile.name], ['E-Mail', profile.email], ['Telefon', profile.phone], ['Adresse', profile.street ? `${profile.street}, ${profile.zip} ${profile.city}` : ''], ['Objekt', profile.propertyType ? `${propertyLabels[profile.propertyType]} · ${profile.sizeSqm ?? '?'} m² · ${profile.rooms ?? '?'} Zi.` : ''], ['Leistung', profile.cleaningType ? `${cleaningLabels[profile.cleaningType]} · ${frequencyText(profile)}` : '']].map(([k, v]) => (
                   <div key={k} className="flex justify-between gap-3 border-b border-line pb-2"><dt className="text-muted">{k}</dt><dd className={`text-end ${v ? '' : 'text-muted italic'}`}>{v || 'fehlt'}</dd></div>
                 ))}
               </dl>

@@ -8,7 +8,13 @@ const KEY = 'clean-demo-state-v1'
 function load(): AppState {
   try {
     const raw = localStorage.getItem(KEY)
-    if (raw) return { blockedSlots: [], ...JSON.parse(raw) }
+    if (raw) {
+      const st = { blockedSlots: [], ...JSON.parse(raw) } as AppState
+      // migrate profiles saved before the commercial fields existed
+      st.profile = { ...emptyProfile, ...st.profile }
+      st.appointments = (st.appointments ?? []).map(a => ({ ...a, customer: { ...emptyProfile, ...a.customer } }))
+      return st
+    }
   } catch { /* ignore */ }
   return { user: null, profile: { ...emptyProfile }, appointments: demoAppointments, blockedSlots: [] }
 }
@@ -67,11 +73,15 @@ export function useStore<T = AppState>(selector: (s: AppState) => T = s => s as 
 }
 
 /** Which profile fields are still missing for a booking, in the order the assistant asks for them. */
-export const requiredFields: (keyof Profile)[] = ['name', 'street', 'zip', 'city', 'propertyType', 'sizeSqm', 'rooms', 'bathrooms', 'floor', 'elevator', 'pets', 'cleaningType', 'frequency', 'extras', 'phone', 'email']
+export const requiredFields: (keyof Profile)[] = ['name', 'propertyType', 'sizeSqm', 'floorTypes', 'rooms', 'bathrooms', 'cleaningType', 'frequency', 'timesPerPeriod', 'timeWindow', 'street', 'zip', 'city', 'floor', 'elevator', 'pets', 'extras', 'phone', 'email']
 export function missingFields(p: Profile): (keyof Profile)[] {
   return requiredFields.filter(f => {
     const v = p[f]
-    if (f === 'extras') return false // optional
+    if (f === 'extras' || f === 'notes') return false // optional
+    if (f === 'floorTypes') return !p.floorTypes?.length
+    if (f === 'timesPerPeriod') return (p.frequency === 'woechentlich' || p.frequency === 'monatlich') && !p.timesPerPeriod
+    // private households: pets matter, for commercial objects we skip the question
+    if (f === 'pets' && p.propertyType && p.propertyType !== 'wohnung' && p.propertyType !== 'haus') return false
     return v === '' || v === null || v === undefined
   })
 }

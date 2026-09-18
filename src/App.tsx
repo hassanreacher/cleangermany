@@ -7,6 +7,7 @@ import { SmoothScroll } from '@/components/SmoothScroll'
 import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
 import { ChatWidget } from '@/components/ChatWidget'
+import { WhatsAppButton } from '@/components/WhatsAppButton'
 import Home from '@/pages/Home'
 import { Impressum, Datenschutz, NotFound } from '@/pages/Legal'
 
@@ -41,6 +42,7 @@ function Pages() {
       </AnimatePresence>
       {!isDash && <Footer />}
       <ChatWidget />
+      <WhatsAppButton />
     </>
   )
 }

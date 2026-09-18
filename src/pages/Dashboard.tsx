@@ -7,7 +7,7 @@ import { store, useStore } from '@/lib/store'
 import { revenueByMonth, serviceMix, team } from '@/lib/data'
 import { Badge } from '@/components/ui'
 import { Counter } from '@/components/motion'
-import { cleaningLabels, euro, extraLabel, formatDateDE, frequencyLabels, propertyLabels, statusLabels, weekdaysShort } from '@/lib/labels'
+import { cleaningLabels, euro, extraLabel, formatDateDE, frequencyText, floorLabels, propertyLabels, statusLabels, timeWindowLabels, weekdaysShort } from '@/lib/labels'
 import { SLOT_TIMES, addDays, fromISO, isBusinessDay, toISO, todayISO } from '@/lib/slots'
 import { useTheme } from '@/components/theme'
 import type { Appointment, AppointmentStatus } from '@/lib/types'
@@ -179,8 +179,8 @@ function RequestCard({ a }: { a: Appointment }) {
       </div>
       <div className="mt-4 grid sm:grid-cols-3 gap-3 text-sm">
         <div className="rounded-xl border border-line bg-surface-strong p-3"><div className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center gap-1"><MapPin size={12} /> Ort</div><div className="mt-1 font-semibold">{c.street}</div><div>{c.zip} {c.city}</div><div className="text-muted text-xs mt-1">Etage {c.floor || '–'} · Aufzug {c.elevator ? 'ja' : 'nein'}</div></div>
-        <div className="rounded-xl border border-line bg-surface-strong p-3"><div className="text-[11px] font-bold uppercase tracking-wider text-muted">Objekt</div><div className="mt-1 font-semibold">{propertyLabels[c.propertyType as keyof typeof propertyLabels]} · {c.sizeSqm} m²</div><div>{c.rooms} Zimmer · {c.bathrooms} Bad</div><div className="text-muted text-xs mt-1">Haustiere: {c.pets ? 'ja' : 'nein'}</div></div>
-        <div className="rounded-xl border border-line bg-surface-strong p-3"><div className="text-[11px] font-bold uppercase tracking-wider text-muted">Leistung</div><div className="mt-1 font-semibold">{cleaningLabels[c.cleaningType as keyof typeof cleaningLabels]}</div><div>{frequencyLabels[c.frequency as keyof typeof frequencyLabels]}</div><div className="text-muted text-xs mt-1">{c.extras.length ? c.extras.map(extraLabel).join(', ') : 'keine Extras'}</div></div>
+        <div className="rounded-xl border border-line bg-surface-strong p-3"><div className="text-[11px] font-bold uppercase tracking-wider text-muted">Objekt</div><div className="mt-1 font-semibold">{propertyLabels[c.propertyType as keyof typeof propertyLabels]} · {c.sizeSqm} m²</div><div>{c.rooms} Räume · {c.bathrooms} Sanitär/Bad</div><div className="text-muted text-xs mt-1">Böden: {c.floorTypes?.length ? c.floorTypes.map(f => floorLabels[f]).join(', ') : '–'} · Haustiere: {c.pets ? 'ja' : 'nein'}</div></div>
+        <div className="rounded-xl border border-line bg-surface-strong p-3"><div className="text-[11px] font-bold uppercase tracking-wider text-muted">Leistung</div><div className="mt-1 font-semibold">{cleaningLabels[c.cleaningType as keyof typeof cleaningLabels]}</div><div>{frequencyText(c)}{c.timeWindow ? ` · ${timeWindowLabels[c.timeWindow]}` : ''}</div><div className="text-muted text-xs mt-1">{c.extras.length ? c.extras.map(extraLabel).join(', ') : 'keine Extras'}</div></div>
       </div>
       {c.notes && <div className="mt-3 text-sm rounded-xl bg-amber-400/10 border border-amber-400/30 px-3 py-2">📝 {c.notes}</div>}
       <div className="mt-4 flex flex-wrap items-end gap-3 border-t border-line pt-4">

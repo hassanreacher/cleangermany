@@ -7,6 +7,7 @@ import { PriceCalculator } from '@/sections/PriceCalculator'
 import { Stats } from '@/sections/Stats'
 import { Testimonials } from '@/sections/Testimonials'
 import { FAQ } from '@/sections/FAQ'
+import { Location } from '@/sections/Location'
 import { CTA } from '@/sections/CTA'
 
 export default function Home() {
@@ -20,6 +21,7 @@ export default function Home() {
       <PriceCalculator />
       <Stats />
       <Testimonials />
+      <Location />
       <FAQ />
       <CTA />
     </>

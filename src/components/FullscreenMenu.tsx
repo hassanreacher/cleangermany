@@ -1,4 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
+import { business, fullAddress, whatsappUrl } from '@/lib/config'
+import { WhatsAppIcon } from './WhatsAppButton'
 import { Link, useLocation } from 'react-router-dom'
 import gsap from 'gsap'
 import { Instagram, Facebook, Linkedin, Mail, Phone, MapPin } from 'lucide-react'
@@ -10,7 +12,7 @@ export const menuLinks = [
   { to: '/leistungen', label: 'Leistungen' },
   { to: '/#ablauf', label: 'So funktioniert’s' },
   { to: '/#preis', label: 'Preisrechner' },
-  { to: '/termin', label: 'Termin buchen' },
+  { to: '/termin', label: 'Angebot anfragen' },
   { to: '/konto', label: 'Mein Konto' },
   { to: '/dashboard', label: 'Dashboard' },
 ]
@@ -77,9 +79,10 @@ export function FullscreenMenu({ open, onClose, origin }: { open: boolean; onClo
         </nav>
         <div ref={footRef} className="menu-footer">
           <div className="flex flex-wrap gap-x-6 gap-y-2">
-            <a href="tel:+498001234567" className="inline-flex items-center gap-2"><Phone size={16} /> 0800 123 45 67</a>
-            <a href="mailto:hallo@clean-shine.de" className="inline-flex items-center gap-2"><Mail size={16} /> hallo@clean-shine.de</a>
-            <span className="inline-flex items-center gap-2"><MapPin size={16} /> Bundesweit · Mo–Sa 08–18 Uhr</span>
+            <a href={`tel:${business.phoneTel}`} className="inline-flex items-center gap-2"><Phone size={16} /> {business.phoneDisplay}</a>
+            <a href={whatsappUrl()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2"><WhatsAppIcon size={16} /> WhatsApp</a>
+            <a href={`mailto:${business.email}`} className="inline-flex items-center gap-2"><Mail size={16} /> {business.email}</a>
+            <span className="inline-flex items-center gap-2"><MapPin size={16} /> {fullAddress} · {business.hours}</span>
           </div>
           <div className="menu-socials">
             <a href="#" aria-label="Instagram"><Instagram size={18} /></a>
