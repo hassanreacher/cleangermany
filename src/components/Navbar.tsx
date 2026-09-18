@@ -41,7 +41,7 @@ export function Navbar() {
       >
         <div className={`container-x transition-all duration-500 ${scrolled ? 'pt-2' : 'pt-4'}`}>
           <div className={`flex items-center justify-between gap-3 rounded-full px-3 sm:px-4 transition-all duration-500 ${scrolled && !open ? 'glass py-2' : 'py-2'}`}>
-            <Link to="/" className={`shrink-0 flex items-center transition-opacity duration-300 ${open ? 'opacity-0 pointer-events-none' : ''}`} aria-label="CLEAN Startseite">
+            <Link to="/" className={`shrink-0 flex items-center transition-opacity duration-300 ${open ? 'opacity-0 pointer-events-none' : ''}`} aria-label="Glanzgeschwister Startseite">
               <Logo tagline={false} size={26} />
             </Link>
             <nav className={`hidden lg:flex items-center gap-1 text-[14px] font-semibold transition-opacity duration-300 ${open ? 'opacity-0 pointer-events-none' : ''}`}>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 190" width="760" height="190" role="img" aria-label="Glanzgeschwister – Präzise. Sicher. Zuverlässig.">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;700&amp;display=swap');
+    .w { font-family: 'Poppins', 'Montserrat', Arial, sans-serif; font-size: 78px; letter-spacing: -0.5px; }
+    .light { font-weight: 300; fill: #35a9cc; }
+    .bold { font-weight: 700; fill: #1d4fb3; }
+    .tag { font-family: 'Poppins', 'Montserrat', Arial, sans-serif; font-weight: 400; font-size: 26px; fill: #2f6bb8; }
+  </style>
+  <text x="380" y="92" text-anchor="middle" class="w"><tspan class="light">GLANZ</tspan><tspan class="bold">GESCHWISTER</tspan></text>
+  <!-- cyan tick accent over the I -->
+  <path d="M596 26 L614 6" stroke="#35a9cc" stroke-width="7"/>
+  <!-- underline -->
+  <rect x="42" y="112" width="676" height="5" fill="#35a9cc"/>
+  <text x="380" y="164" text-anchor="middle" class="tag">Präzise. Sicher. Zuverlässig.</text>
+</svg>

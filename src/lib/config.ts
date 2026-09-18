@@ -3,7 +3,8 @@
  * TODO: replace the phone / WhatsApp number with the real one (WhatsApp: international format, digits only).
  */
 export const business = {
-  brand: 'CLEAN – Let it shine',
+  brand: 'Glanzgeschwister',
+  claim: 'Präzise. Sicher. Zuverlässig.',
   company: 'Glanzgeschwister',
   owner: 'Julia Bethke',
   ownerTitle: 'Inhaberin',

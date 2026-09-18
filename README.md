@@ -1,4 +1,6 @@
-# CLEAN – Let it shine · Demo-Website
+# Glanzgeschwister · Präzise. Sicher. Zuverlässig.
+
+Logo: `src/components/Logo.tsx` (Wordmark als HTML/SVG, transparent, skalierbar) · `public/logo.svg` (Standalone-Datei) · `public/favicon.svg`.
 
 Moderne, animierte React-Website für einen deutschen Reinigungsservice (Wohnung, Haus, Büro, Praxis) – inklusive
 Buchungs-Assistent, Kalender, Inhaber-Dashboard und KI-Assistentin **Clea** (Groq). Alles läuft **ohne Datenbank**:

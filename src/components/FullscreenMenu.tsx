@@ -67,7 +67,7 @@ export function FullscreenMenu({ open, onClose, origin }: { open: boolean; onClo
       <div className="menu-bg" />
       <div className="menu-inner">
         <div className="flex items-center justify-between h-12">
-          <span className="font-display font-black tracking-[0.3em] text-sm text-white/70">CLEAN · MENÜ</span>
+          <span className="font-display font-black tracking-[0.3em] text-sm text-white/70">GLANZGESCHWISTER · MENÜ</span>
         </div>
         <nav ref={linksRef} className="menu-links">
           {menuLinks.map((l, i) => (
