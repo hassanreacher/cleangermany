@@ -23,6 +23,8 @@ export const business = {
   /** Discount when the customer sends the request AND contacts the owner directly (call / WhatsApp) */
   directDiscount: [10, 20] as [number, number],
   mapsQuery: 'Nuthestraße 49c, 12307 Berlin',
+  /** Feature flags – customer accounts / owner dashboard are hidden for now */
+  features: { accounts: false },
 }
 
 export const fullAddress = `${business.street}, ${business.zip} ${business.city}`

@@ -31,7 +31,6 @@ export function Footer() {
               <li><Link to="/#faq" className="hover:text-cyan-deep transition">FAQ</Link></li>
               <li><Link to="/#standort" className="hover:text-cyan-deep transition">Standort</Link></li>
               <li><Link to="/termin" className="hover:text-cyan-deep transition">Termin buchen</Link></li>
-              <li><Link to="/dashboard" className="hover:text-cyan-deep transition">Inhaber-Dashboard</Link></li>
               <li><Link to="/impressum" className="hover:text-cyan-deep transition">Impressum</Link></li>
               <li><Link to="/datenschutz" className="hover:text-cyan-deep transition">Datenschutz</Link></li>
             </ul>

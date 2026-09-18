@@ -1,29 +1,21 @@
 /**
- * GLANZGESCHWISTER wordmark – recreated as HTML + inline SVG (transparent, scalable, crisp at any size).
- * "GLANZ" light cyan, "GESCHWISTER" bold blue with a cyan tick accent over the I, cyan underline, tagline below.
+ * GLANZGESCHWISTER logo – the original artwork (background removed, transparent PNG in /public).
+ * `size` is the cap height of the wordmark in px; the image keeps its aspect ratio.
+ * In dark mode the logo sits on a white pill so the blue wordmark stays readable.
  */
+const RATIO = 694 / 166 // width / height of logo.png (with tagline)
+const MARK_PART = 0.66 // share of the height taken by wordmark + underline (tagline below is cropped when tagline=false)
+
 export const logoColors = { cyan: '#35a9cc', blue: '#1d4fb3', tagline: '#2f6bb8' }
 
 export function Logo({ className = '', tagline = true, light = false, size = 36 }: { className?: string; tagline?: boolean; light?: boolean; size?: number }) {
-  const blue = light ? '#fff' : 'var(--logo-ink)'
-  const tag = light ? 'rgba(255,255,255,.85)' : 'var(--logo-tag)'
-  const font = "'Poppins', 'Montserrat', ui-sans-serif, system-ui, sans-serif"
+  // height of the full image; without the tagline we show only the top part (wordmark + underline)
+  const fullH = tagline ? size * 1.9 : size * 1.25
+  const width = fullH * RATIO
+  const visibleH = tagline ? fullH : fullH * MARK_PART
   return (
-    <span className={`inline-flex flex-col items-center leading-none select-none ${className}`} role="img" aria-label="Glanzgeschwister – Präzise. Sicher. Zuverlässig.">
-      <span className="inline-flex items-baseline" style={{ fontFamily: font, fontSize: size, lineHeight: 1, letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>
-        <span style={{ fontWeight: 300, color: logoColors.cyan }}>GLANZ</span>
-        <span style={{ fontWeight: 700, color: blue }}>GESCHW</span>
-        <span className="relative inline-block" style={{ fontWeight: 700, color: blue }}>
-          I
-          {/* cyan tick accent over the I */}
-          <svg viewBox="0 0 10 12" aria-hidden className="absolute" style={{ width: size * 0.34, height: size * 0.4, left: '-4%', top: `-${size * 0.34}px` }}>
-            <path d="M1.5 9.5 L8.5 1.5" stroke={logoColors.cyan} strokeWidth="3.2" strokeLinecap="butt" />
-          </svg>
-        </span>
-        <span style={{ fontWeight: 700, color: blue }}>STER</span>
-      </span>
-      <span aria-hidden style={{ display: 'block', width: '100%', height: Math.max(2, size * 0.075), background: logoColors.cyan, marginTop: size * 0.14, borderRadius: 1 }} />
-      {tagline && <span style={{ fontFamily: font, fontWeight: 400, fontSize: size * 0.3, letterSpacing: '0.01em', color: tag, marginTop: size * 0.2, whiteSpace: 'nowrap' }}>Präzise. Sicher. Zuverlässig.</span>}
+    <span className={`logo-pill inline-flex items-center select-none ${light ? 'logo-light' : ''} ${className}`} role="img" aria-label="Glanzgeschwister – Präzise. Sicher. Zuverlässig." style={{ height: visibleH, width, overflow: 'hidden' }}>
+      <img src="/logo.png" srcSet="/logo.png 1x, /logo-1600.png 2x" alt="" draggable={false} style={{ width, height: fullH, objectFit: 'cover', objectPosition: 'top', display: 'block' }} />
     </span>
   )
 }
@@ -39,3 +31,4 @@ export function LogoMark({ className = '' }: { className?: string }) {
     </svg>
   )
 }
+

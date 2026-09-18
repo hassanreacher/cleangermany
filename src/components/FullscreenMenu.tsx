@@ -13,8 +13,6 @@ export const menuLinks = [
   { to: '/#ablauf', label: 'So funktioniert’s' },
   { to: '/#preis', label: 'Preisrechner' },
   { to: '/termin', label: 'Angebot anfragen' },
-  { to: '/konto', label: 'Mein Konto' },
-  { to: '/dashboard', label: 'Dashboard' },
 ]
 
 /**

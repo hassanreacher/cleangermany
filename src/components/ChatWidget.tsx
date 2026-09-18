@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
 import { MessageCircle, X, Send, Sparkles, CalendarCheck, Euro, RotateCcw, BadgePercent, Phone, Check } from 'lucide-react'
 import { ChatEngine, type ChatMsg } from '@/lib/chat'
 import { useStore } from '@/lib/store'
@@ -144,7 +143,6 @@ function UiPart({ m, onPick }: { m: ChatMsg; onPick: (t: string) => void }) {
             <a href={`tel:${business.phoneTel}`} className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5 font-bold"><Phone size={14} /> Anrufen</a>
           </div>
         </div>
-        <Link to="/konto" className="inline-block mt-3 text-xs font-bold underline underline-offset-4">Zu meinen Anfragen →</Link>
       </motion.div>
     )
   }

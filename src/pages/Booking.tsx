@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { MapPin, Home, Building2, Stethoscope, House, ArrowLeft, ArrowRight, Check, Minus, Plus, PartyPopper, Sparkles, CalendarCheck, Dog, ArrowUpDown, Baby, GraduationCap, Footprints, Store, Warehouse, Layers, Repeat, Clock, Phone, BadgePercent } from 'lucide-react'
-import { Input, OptionCard, Chip, Toggle, Textarea } from '@/components/ui'
+import { Input, Chip, Toggle, Textarea } from '@/components/ui'
 import { Calendar } from '@/components/Calendar'
 import { WhatsAppIcon } from '@/components/WhatsAppButton'
 import { store, useStore, missingFields } from '@/lib/store'
@@ -15,7 +15,23 @@ import type { CleaningType, Frequency, PropertyType, Appointment, FloorType, Tim
 
 const steps = ['Objekt', 'Böden', 'Rhythmus', 'Ort', 'Kontakt', 'Termin', 'Prüfen']
 const propIcons: Record<PropertyType, typeof Home> = { wohnung: Home, haus: House, buero: Building2, praxis: Stethoscope, kita: Baby, schule: GraduationCap, treppenhaus: Footprints, gewerbe: Store, halle: Warehouse }
+const cleaningDesc: Record<CleaningType, string> = { buero: 'Regelmäßige Reinigung von Arbeitsplätzen, Böden, Sanitär & Teeküche', unterhalt: 'Regelmäßige Pflege: Böden, Bäder, Küche, Oberflächen', grund: 'Intensiv bis in die Ecken – Fugen, Rahmen, Schränke innen', umzug: 'Besenreine Übergabe inkl. Küche, Fenster & Keller', fenster: 'Glas innen & außen streifenfrei, inkl. Rahmen' }
 const propDesc: Record<PropertyType, string> = { buero: 'Arbeitsplätze, Teeküche, Sanitär', praxis: 'Hygiene nach RKI-Standard', kita: 'Kindgerecht & schadstofffrei', schule: 'Klassenräume, Flure, WCs', treppenhaus: 'Stufen, Geländer, Handläufe', gewerbe: 'Laden, Werkstatt, Studio', halle: 'Große Flächen, Maschinenreinigung', wohnung: 'Privat, regelmäßig oder einmalig', haus: 'Mehrere Etagen, Außenbereich' }
+
+/** Tiny pattern icons for the floor types. */
+function FloorIcon({ type }: { type: FloorType }) {
+  const c = 'currentColor'
+  switch (type) {
+    case 'fliesen': return <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke={c} strokeWidth="1.8"><rect x="3" y="3" width="8" height="8" rx="1" /><rect x="13" y="3" width="8" height="8" rx="1" /><rect x="3" y="13" width="8" height="8" rx="1" /><rect x="13" y="13" width="8" height="8" rx="1" /></svg>
+    case 'teppich': return <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke={c} strokeWidth="1.8"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 9v6M10 9v6M13 9v6M17 9v6" /></svg>
+    case 'parkett': return <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke={c} strokeWidth="1.8"><path d="M3 8h18M3 12h18M3 16h18M9 4v4M15 8v4M9 12v4M15 16v4" /><rect x="3" y="4" width="18" height="16" rx="1.5" /></svg>
+    case 'laminat': return <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke={c} strokeWidth="1.8"><rect x="3" y="4" width="18" height="16" rx="1.5" /><path d="M3 9.3h18M3 14.6h18M12 4v5.3M7 9.3v5.3M16 14.6V20" /></svg>
+    case 'stein': return <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke={c} strokeWidth="1.8"><path d="M4 9l5-5 7 2 4 6-3 7-8 1-5-4z" /><path d="M9 4l2 7-7 2M11 11l6 1M11 11l-2 8" /></svg>
+    case 'linoleum': return <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke={c} strokeWidth="1.8"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M6 16c3-4 9-4 12 0M6 9c3 4 9 4 12 0" /></svg>
+    case 'pvc': return <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke={c} strokeWidth="1.8"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 12h18M8 4v16M16 4v16" /></svg>
+    default: return <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke={c} strokeWidth="1.8"><rect x="3" y="3" width="8" height="8" rx="1" /><rect x="13" y="3" width="8" height="8" rx="4" /><rect x="3" y="13" width="8" height="8" rx="4" /><rect x="13" y="13" width="8" height="8" rx="1" /></svg>
+  }
+}
 
 export default function Booking() {
   const p = useStore(s => s.profile)
@@ -53,7 +69,7 @@ export default function Booking() {
 
   return (
     <section className="pt-32 pb-20 min-h-[100svh]">
-      <div className="container-x max-w-4xl">
+      <div className="container-x max-w-6xl">
         <div className="text-center">
           <span className="eyebrow justify-center">Angebot anfragen</span>
           <h1 className="mt-3 text-3xl sm:text-5xl font-black">In 2 Minuten zum Angebot.</h1>
@@ -74,7 +90,7 @@ export default function Booking() {
           </ol>
         </div>
 
-        <div className="mt-8 grid lg:grid-cols-[1fr_300px] gap-6 items-start">
+        <div className="mt-8 grid lg:grid-cols-[1fr_330px] gap-6 items-start">
           <div className="glass p-5 sm:p-8 overflow-hidden">
             <AnimatePresence mode="wait" custom={dir}>
               <motion.div key={step} custom={dir} initial={{ opacity: 0, x: 40 * dir }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 * dir }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
@@ -145,6 +161,21 @@ function EstimateCard({ est, compact }: { est: [number, number]; compact: boolea
   )
 }
 
+/** Horizontal selection card – icon on the left, title + description on the right. Reads well at any width. */
+function Tile({ active, title, desc, icon, onClick }: { active: boolean; title: string; desc?: string; icon?: React.ReactNode; onClick: () => void }) {
+  return (
+    <motion.button type="button" whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} onClick={onClick} aria-pressed={active}
+      className={`relative text-start rounded-2xl border p-3.5 sm:p-4 flex items-center gap-3.5 w-full min-h-[72px] transition ${active ? 'border-cyan bg-cyan/10 shadow-[0_12px_30px_-12px_var(--glow)]' : 'border-line bg-surface-strong hover:border-cyan/60'}`}>
+      {icon && <span className={`w-11 h-11 shrink-0 rounded-xl grid place-items-center transition ${active ? 'text-white' : 'bg-cyan/10 text-cyan-deep'}`} style={active ? { background: 'linear-gradient(135deg, var(--cyan), var(--cyan-deep))' } : undefined}>{icon}</span>}
+      <span className="min-w-0 flex-1">
+        <span className="block font-display font-bold leading-tight">{title}</span>
+        {desc && <span className="block text-xs text-muted mt-0.5 leading-snug">{desc}</span>}
+      </span>
+      <span className={`w-6 h-6 shrink-0 rounded-full grid place-items-center border transition ${active ? 'bg-cyan border-cyan text-white' : 'border-line text-transparent'}`}><Check size={14} /></span>
+    </motion.button>
+  )
+}
+
 function StepTitle({ icon, title, sub }: { icon: React.ReactNode; title: string; sub: string }) {
   return (
     <div className="flex items-start gap-4">
@@ -178,14 +209,14 @@ function StepObject() {
     <div>
       <StepTitle icon={<Building2 size={20} />} title="Was soll gereinigt werden?" sub="Objektart und Fläche bestimmen Zeitaufwand und Preis. Schätzungen reichen." />
       <div className="mt-6 text-xs font-bold uppercase tracking-wider text-muted">Gewerbe & Einrichtungen</div>
-      <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {commercialTypes.map(k => { const I = propIcons[k]; return <OptionCard key={k} active={p.propertyType === k} title={propertyLabels[k]} desc={propDesc[k]} icon={<I size={22} />} onClick={() => up({ propertyType: k, pets: p.pets ?? false })} /> })}
+      <div className="mt-2 grid sm:grid-cols-2 gap-2.5">
+        {commercialTypes.map(k => { const I = propIcons[k]; return <Tile key={k} active={p.propertyType === k} title={propertyLabels[k]} desc={propDesc[k]} icon={<I size={22} />} onClick={() => up({ propertyType: k, pets: p.pets ?? false })} /> })}
       </div>
       <div className="mt-5 text-xs font-bold uppercase tracking-wider text-muted">Privat</div>
-      <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {privateTypes.map(k => { const I = propIcons[k]; return <OptionCard key={k} active={p.propertyType === k} title={propertyLabels[k]} desc={propDesc[k]} icon={<I size={22} />} onClick={() => up({ propertyType: k })} /> })}
+      <div className="mt-2 grid sm:grid-cols-2 gap-2.5">
+        {privateTypes.map(k => { const I = propIcons[k]; return <Tile key={k} active={p.propertyType === k} title={propertyLabels[k]} desc={propDesc[k]} icon={<I size={22} />} onClick={() => up({ propertyType: k })} /> })}
       </div>
-      <div className="mt-7 grid lg:grid-cols-[1fr_200px] gap-6 items-center">
+      <div className="mt-8 grid lg:grid-cols-[1fr_220px] gap-8 items-center">
         <div>
           <div className="flex justify-between text-sm font-semibold mb-3"><span>Fläche</span><span className="text-cyan-deep font-display text-lg">{sqm} m²</span></div>
           <input type="range" min={20} max={2000} step={10} value={sqm} onChange={e => up({ sizeSqm: +e.target.value })} style={{ ['--pct' as string]: `${((sqm - 20) / 1980) * 100}%` }} aria-label="Fläche" />
@@ -212,8 +243,8 @@ function StepFloors() {
   return (
     <div>
       <StepTitle icon={<Layers size={20} />} title="Welche Böden haben Sie?" sub="Mehrfachauswahl möglich. Jeder Bodenbelag bekommt das passende Reinigungsmittel." />
-      <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {(Object.keys(floorLabels) as FloorType[]).map(f => <OptionCard key={f} active={p.floorTypes.includes(f)} title={floorLabels[f]} desc={tips[f]} onClick={() => toggle(f)} />)}
+      <div className="mt-6 grid sm:grid-cols-2 gap-2.5">
+        {(Object.keys(floorLabels) as FloorType[]).map(f => <Tile key={f} active={p.floorTypes.includes(f)} title={floorLabels[f]} desc={tips[f]} icon={<FloorIcon type={f} />} onClick={() => toggle(f)} />)}
       </div>
       <p className="mt-4 text-xs text-muted">{p.floorTypes.length ? `Gewählt: ${p.floorTypes.map(f => floorLabels[f]).join(', ')}` : 'Bitte mindestens einen Bodenbelag wählen.'}</p>
     </div>
@@ -229,7 +260,7 @@ function StepRhythm() {
     <div>
       <StepTitle icon={<Repeat size={20} />} title="Wie oft dürfen wir kommen?" sub="Leistung, Rhythmus und bevorzugte Uhrzeit – bei Gewerbe gern außerhalb Ihrer Öffnungszeiten." />
       <div className="mt-6 text-sm font-semibold mb-3">Leistung</div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">{types.map(k => <OptionCard key={k} active={p.cleaningType === k} title={cleaningLabels[k]} onClick={() => up({ cleaningType: k })} />)}</div>
+      <div className="grid sm:grid-cols-2 gap-2.5">{types.map(k => <Tile key={k} active={p.cleaningType === k} title={cleaningLabels[k]} desc={cleaningDesc[k]} icon={<Sparkles size={20} />} onClick={() => up({ cleaningType: k })} />)}</div>
 
       <div className="mt-6 text-sm font-semibold mb-3">Rhythmus</div>
       <div className="flex flex-wrap gap-2">{(Object.keys(frequencyLabels) as Frequency[]).map(k => <Chip key={k} active={p.frequency === k} onClick={() => setFreq(k)}>{frequencyLabels[k]}</Chip>)}</div>
@@ -339,8 +370,8 @@ function Success({ a }: { a: Appointment }) {
           </div>
 
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link to="/konto" className="btn btn-primary">Zu meinen Anfragen</Link>
-            <Link to="/" className="btn btn-ghost">Zur Startseite</Link>
+            <Link to="/" className="btn btn-primary">Zur Startseite</Link>
+            <Link to="/leistungen" className="btn btn-ghost">Leistungen ansehen</Link>
           </div>
         </motion.div>
       </div>

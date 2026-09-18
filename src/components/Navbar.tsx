@@ -6,6 +6,7 @@ import { Logo } from './Logo'
 import { FullscreenMenu } from './FullscreenMenu'
 import { useTheme } from './theme'
 import { useStore } from '@/lib/store'
+import { business } from '@/lib/config'
 
 export function Navbar() {
   const [open, setOpen] = useState(false)
@@ -42,7 +43,7 @@ export function Navbar() {
         <div className={`container-x transition-all duration-500 ${scrolled ? 'pt-2' : 'pt-4'}`}>
           <div className={`flex items-center justify-between gap-3 rounded-full px-3 sm:px-4 transition-all duration-500 ${scrolled && !open ? 'glass py-2' : 'py-2'}`}>
             <Link to="/" className={`shrink-0 flex items-center transition-opacity duration-300 ${open ? 'opacity-0 pointer-events-none' : ''}`} aria-label="Glanzgeschwister Startseite">
-              <Logo tagline={false} size={26} />
+              <Logo tagline={false} size={34} />
             </Link>
             <nav className={`hidden lg:flex items-center gap-1 text-[14px] font-semibold transition-opacity duration-300 ${open ? 'opacity-0 pointer-events-none' : ''}`}>
               {[['/', 'Start'], ['/leistungen', 'Leistungen'], ['/#preis', 'Preisrechner'], ['/termin', 'Angebot']].map(([to, label]) => (
@@ -53,7 +54,7 @@ export function Navbar() {
               <div className={`contents ${open ? '[&>*]:opacity-0 [&>*]:pointer-events-none' : ''}`}>
               <button onClick={toggleDir} className="hidden sm:grid w-10 h-10 place-items-center rounded-full border border-line bg-surface hover:border-cyan transition" aria-label="Schreibrichtung umschalten (RTL/LTR)" title={dir === 'rtl' ? 'LTR' : 'RTL'}><Languages size={17} /></button>
               <button onClick={toggle} className="grid w-10 h-10 place-items-center rounded-full border border-line bg-surface hover:border-cyan transition" aria-label="Theme umschalten">{theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}</button>
-              {user ? (
+              {!business.features.accounts ? null : user ? (
                 <Link to={user.role === 'inhaber' ? '/dashboard' : '/konto'} className="btn btn-dark btn-sm hidden sm:inline-flex">{user.role === 'inhaber' ? <LayoutDashboard size={16} /> : <UserRound size={16} />}{user.role === 'inhaber' ? 'Dashboard' : 'Mein Konto'}</Link>
               ) : (
                 <Link to="/login" className="btn btn-ghost btn-sm hidden sm:inline-flex"><LogIn size={16} /> Anmelden</Link>

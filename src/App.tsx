@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
+import { business } from '@/lib/config'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ThemeProvider } from '@/components/theme'
 import { Background } from '@/components/Background'
@@ -30,9 +31,9 @@ function Pages() {
               <Route path="/" element={<Home />} />
               <Route path="/leistungen" element={<Leistungen />} />
               <Route path="/termin" element={<Booking />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/konto" element={<Konto />} />
-              <Route path="/dashboard/*" element={<Dashboard />} />
+              <Route path="/login" element={business.features.accounts ? <Login /> : <Navigate to="/" replace />} />
+              <Route path="/konto" element={business.features.accounts ? <Konto /> : <Navigate to="/" replace />} />
+              <Route path="/dashboard/*" element={business.features.accounts ? <Dashboard /> : <Navigate to="/" replace />} />
               <Route path="/impressum" element={<Impressum />} />
               <Route path="/datenschutz" element={<Datenschutz />} />
               <Route path="*" element={<NotFound />} />
