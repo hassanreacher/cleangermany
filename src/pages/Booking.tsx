@@ -9,7 +9,7 @@ import { store, useStore, missingFields } from '@/lib/store'
 import { cityFromZip, cities } from '@/lib/data'
 import { estimatePrice, estimateDuration, estimateMonthly, withDiscount, cleaningsPerMonth } from '@/lib/pricing'
 import { cleaningLabels, extraOptions, formatDateDE, frequencyLabels, propertyLabels, extraLabel, floorLabels, timeWindowLabels, frequencyText, isCommercial, commercialTypes } from '@/lib/labels'
-import { business, whatsappUrl } from '@/lib/config'
+import { business, whatsappUrl, inServiceArea } from '@/lib/config'
 import { requestSummary } from '@/lib/summary'
 import type { CleaningType, Frequency, PropertyType, Appointment, FloorType, TimeWindow } from '@/lib/types'
 
@@ -103,7 +103,7 @@ export default function Booking() {
                     <StepTitle icon={<Sparkles size={20} />} title="Wie erreichen wir Sie?" sub="Für Angebot, Rückfragen und den Direkt-Rabatt." />
                     <div className="grid sm:grid-cols-2 gap-4 mt-6">
                       <Input label={isCommercial(p.propertyType) ? 'Ansprechperson / Firma' : 'Vollständiger Name'} value={p.name} onChange={e => up({ name: e.target.value })} placeholder={isCommercial(p.propertyType) ? 'Muster GmbH · Anna Schneider' : 'Anna Schneider'} autoComplete="name" />
-                      <Input label="Telefon" value={p.phone} onChange={e => up({ phone: e.target.value })} placeholder="+49 30 1234567" type="tel" autoComplete="tel" />
+                      <Input label="Telefon" value={p.phone} onChange={e => up({ phone: e.target.value })} placeholder="+49 30 1234567 oder 0176 …" type="tel" autoComplete="tel" />
                       <div className="sm:col-span-2"><Input label="E-Mail" value={p.email} onChange={e => up({ email: e.target.value })} placeholder="anna@beispiel.de" type="email" autoComplete="email" /></div>
                     </div>
                   </div>
@@ -290,9 +290,10 @@ function StepLocation() {
   const p = useStore(s => s.profile)
   const up = store.updateProfile
   const known = cities.includes(p.city)
+  const inArea = inServiceArea(p.zip)
   return (
     <div>
-      <StepTitle icon={<MapPin size={20} />} title="Wo dürfen wir glänzen?" sub="Die Adresse des Objekts – PLZ eingeben, wir ergänzen die Stadt automatisch." />
+      <StepTitle icon={<MapPin size={20} />} title="Wo dürfen wir glänzen?" sub="Die Adresse des Objekts in Berlin – PLZ eingeben, wir ergänzen die Stadt automatisch." />
       <div className="grid lg:grid-cols-[1fr_260px] gap-6 mt-6">
         <div className="grid sm:grid-cols-[1fr_140px] gap-4">
           <div className="sm:col-span-2"><Input label="Straße & Hausnummer" value={p.street} onChange={e => up({ street: e.target.value })} placeholder="Kastanienallee 12" autoComplete="street-address" /></div>
@@ -311,7 +312,7 @@ function StepLocation() {
           </svg>
           <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 2, repeat: Infinity }} className="absolute left-1/2 top-[38%] -translate-x-1/2 -translate-y-full text-cyan-deep"><MapPin size={40} fill="var(--cyan)" stroke="#fff" /></motion.div>
           <div className="absolute inset-x-3 bottom-3 rounded-xl bg-bg/90 backdrop-blur px-3 py-2 text-xs font-semibold text-center">
-            {p.city ? (known ? <span className="text-emerald-600 dark:text-emerald-300">✓ Wir sind in {p.city} verfügbar</span> : <span>{p.city} – Verfügbarkeit auf Anfrage</span>) : <span className="text-muted">PLZ eingeben …</span>}
+            {inArea === true || (known && !p.zip) ? <span className="text-emerald-600 dark:text-emerald-300">✓ Berlin – wir sind bei Ihnen im Einsatz</span> : inArea === false ? <span className="text-amber-600 dark:text-amber-300">Außerhalb Berlins – wir reinigen aktuell nur in Berlin</span> : <span className="text-muted">Berliner PLZ eingeben …</span>}
           </div>
         </div>
       </div>

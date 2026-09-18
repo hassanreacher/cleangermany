@@ -12,7 +12,7 @@ export function Location() {
         <div className="max-w-2xl">
           <Reveal><span className="eyebrow">Standort</span></Reveal>
           <TextReveal text="Hier glänzen wir zuhause." className="mt-4 text-4xl sm:text-5xl font-black" />
-          <Reveal delay={0.15}><p className="mt-4 text-muted text-lg">{business.company} · {business.ownerTitle} {business.owner} – aus {business.district} für ganz Berlin und Umgebung.</p></Reveal>
+          <Reveal delay={0.15}><p className="mt-4 text-muted text-lg">{business.company} · {business.ownerTitle} {business.owner} – aus {business.district} für ganz Berlin – alle Bezirke.</p></Reveal>
         </div>
 
         <Reveal delay={0.1} className="mt-10">

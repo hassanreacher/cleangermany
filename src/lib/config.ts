@@ -1,6 +1,5 @@
 /**
  * Central business configuration – edit here, used everywhere (footer, map, WhatsApp, AI prompt, Impressum).
- * TODO: replace the phone / WhatsApp number with the real one (WhatsApp: international format, digits only).
  */
 export const business = {
   brand: 'Glanzgeschwister',
@@ -12,12 +11,14 @@ export const business = {
   zip: '12307',
   city: 'Berlin',
   district: 'Berlin-Lichtenrade',
-  phoneDisplay: '0800 123 45 67',
-  phoneTel: '+498001234567',
-  /** WhatsApp number in international format without "+" or spaces, e.g. 4917612345678 */
-  whatsapp: '4917612345678',
+  phoneDisplay: '+49 176 61407495',
+  phoneTel: '+4917661407495',
+  /** WhatsApp number in international format without "+" or spaces */
+  whatsapp: '4917661407495',
   email: 'hallo@clean-shine.de',
   hours: 'Mo–Sa 08–18 Uhr',
+  /** Service area: Berlin only (PLZ 10115–14199) */
+  serviceArea: { name: 'Berlin', zipMin: 10115, zipMax: 14199 },
   /** Approximate price per m² and cleaning (EUR) */
   pricePerSqm: [1.3, 1.45] as [number, number],
   /** Discount when the customer sends the request AND contacts the owner directly (call / WhatsApp) */
@@ -25,6 +26,12 @@ export const business = {
   mapsQuery: 'Nuthestraße 49c, 12307 Berlin',
   /** Feature flags – customer accounts / owner dashboard are hidden for now */
   features: { accounts: false },
+}
+
+export function inServiceArea(zip: string) {
+  if (!/^\d{5}$/.test(zip)) return null
+  const n = +zip
+  return n >= business.serviceArea.zipMin && n <= business.serviceArea.zipMax
 }
 
 export const fullAddress = `${business.street}, ${business.zip} ${business.city}`

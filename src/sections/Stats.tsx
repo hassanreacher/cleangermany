@@ -1,6 +1,6 @@
 import { Counter, Reveal } from '@/components/motion'
 const stats = [
-  { v: 2400, s: '+', l: 'zufriedene Kund:innen' }, { v: 4.9, s: '', l: 'Ø Bewertung (1.240 Stimmen)', dec: true }, { v: 12, s: '', l: 'Städte bundesweit' }, { v: 98, s: ' %', l: 'Weiterempfehlungsrate' },
+  { v: 2400, s: '+', l: 'zufriedene Kund:innen' }, { v: 4.9, s: '', l: 'Ø Bewertung (1.240 Stimmen)', dec: true }, { v: 12, s: '', l: 'Berliner Bezirke' }, { v: 98, s: ' %', l: 'Weiterempfehlungsrate' },
 ]
 export function Stats() {
   return (

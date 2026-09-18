@@ -9,7 +9,7 @@ Profil und Termine werden im Browser (localStorage) gespeichert, Beispieldaten s
 ## Business & Konfiguration
 
 Alle Firmendaten stehen zentral in `src/lib/config.ts` (Glanzgeschwister · Inh. Julia Bethke · Nuthestr. 49 c · 12307 Berlin):
-Telefon, **WhatsApp-Nummer** (`whatsapp`, internationales Format ohne „+“), E-Mail, Öffnungszeiten, **Preis pro m² (1,30–1,45 €)**
+Telefon/WhatsApp **+49 176 61407495** (`whatsapp`, internationales Format ohne „+“), Einsatzgebiet **nur Berlin** (`serviceArea`), E-Mail, Öffnungszeiten, **Preis pro m² (1,30–1,45 €)**
 und **Direkt-Rabatt (10–20 %)**. Karte und Routen-Link nutzen `mapsQuery`.
 
 ## Angebotsanfrage (Formular & KI)

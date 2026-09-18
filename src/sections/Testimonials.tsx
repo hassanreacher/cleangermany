@@ -2,11 +2,11 @@ import { motion } from 'framer-motion'
 import { Star, Quote } from 'lucide-react'
 import { Reveal, TextReveal } from '@/components/motion'
 const list = [
-  { n: 'Anna S.', c: 'Berlin', t: 'Ich habe den Termin komplett im Chat mit Clea gebucht – zwei Minuten, fertig. Das Team war pünktlich, freundlich und die Wohnung hat wirklich geglänzt.' },
-  { n: 'Familie Müller', c: 'Köln', t: 'Mit zwei Kindern und Hund brauchen wir alle zwei Wochen Hilfe. Immer dasselbe Team, immer top. Der Festpreis ist fair und es gab nie Überraschungen.' },
-  { n: 'Dr. Hoffmann', c: 'München', t: 'Für unsere Praxis brauchen wir Hygiene mit Nachweis. Glanzgeschwister liefert das zuverlässig außerhalb unserer Sprechzeiten. Sehr professionell.' },
-  { n: 'Jonas F.', c: 'Stuttgart', t: 'Umzugsreinigung mit Kautionsgarantie – der Vermieter hatte nichts zu beanstanden. Ich habe die volle Kaution zurückbekommen.' },
-  { n: 'Sophie B.', c: 'Frankfurt', t: 'Ich liebe, dass mein Profil alles speichert. Nachbuchen geht in 20 Sekunden. Und die Reinigungsmittel riechen nicht nach Chemie.' },
+  { n: 'Anna S.', c: 'Berlin-Lichtenrade', t: 'Ich habe den Termin komplett im Chat mit Clea gebucht – zwei Minuten, fertig. Das Team war pünktlich, freundlich und die Wohnung hat wirklich geglänzt.' },
+  { n: 'Familie Müller', c: 'Berlin-Steglitz', t: 'Mit zwei Kindern und Hund brauchen wir alle zwei Wochen Hilfe. Immer dasselbe Team, immer top. Der Festpreis ist fair und es gab nie Überraschungen.' },
+  { n: 'Dr. Hoffmann', c: 'Berlin-Mitte', t: 'Für unsere Praxis brauchen wir Hygiene mit Nachweis. Glanzgeschwister liefert das zuverlässig außerhalb unserer Sprechzeiten. Sehr professionell.' },
+  { n: 'Jonas F.', c: 'Berlin-Neukölln', t: 'Umzugsreinigung mit Kautionsgarantie – der Vermieter hatte nichts zu beanstanden. Ich habe die volle Kaution zurückbekommen.' },
+  { n: 'Sophie B.', c: 'Berlin-Charlottenburg', t: 'Ich liebe, dass mein Profil alles speichert. Nachbuchen geht in 20 Sekunden. Und die Reinigungsmittel riechen nicht nach Chemie.' },
 ]
 export function Testimonials() {
   return (

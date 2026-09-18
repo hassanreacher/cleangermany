@@ -74,7 +74,7 @@ function context() {
   return {
     today: formatDateDE(today), weekday: weekdaysLong[new Date().getDay()], profile: profileSummary(s.profile), missing,
     loggedIn: !!s.user, appointments: own.map(a => `${a.code} am ${formatDateDE(a.date)} ${a.time} (${a.status})`).join('; '),
-    business: `${business.company} (Inh. ${business.owner}), ${fullAddress}, Tel. ${business.phoneDisplay}, WhatsApp verfügbar`,
+    business: `${business.company} (Inh. ${business.owner}), ${fullAddress}, Tel./WhatsApp ${business.phoneDisplay}. EINSATZGEBIET: ausschließlich Berlin (alle Bezirke, PLZ 10115–14199) – Anfragen außerhalb Berlins freundlich ablehnen.`,
     pricing: `ca. ${lo.toFixed(2).replace('.', ',')}–${hi.toFixed(2).replace('.', ',')} € pro m² und Reinigung (Richtwert). Grund-/Umzugsreinigung intensiver (ca. ×1,7–1,9). DIREKT-RABATT: Anfrage online senden und sich danach direkt telefonisch oder per WhatsApp bei ${business.owner} melden → ${business.directDiscount[0]}–${business.directDiscount[1]} % Rabatt.`,
   }
 }
@@ -235,7 +235,7 @@ export class ChatEngine {
 
     // contact / WhatsApp / discount
     if (/whatsapp|anruf|telefon|rabatt|direkt|sparen|günstiger|billiger/.test(low)) return [say(`Sehr gern! ${discountLine} Hier geht es direkt weiter:`, { type: 'contact', contact: { whatsapp: whatsappUrl(requestSummary(p)) } })]
-    if (/wo seid|standort|adresse|anfahrt|wo sitzt|wo befindet/.test(low)) return [say(`Sie finden uns hier: ${business.company}, Inh. ${business.owner}, ${fullAddress} (${business.district}). Wir sind in ganz Berlin und Umgebung im Einsatz – ${business.hours}.`)]
+    if (/wo seid|standort|adresse|anfahrt|wo sitzt|wo befindet/.test(low)) return [say(`Sie finden uns hier: ${business.company}, Inh. ${business.owner}, ${fullAddress} (${business.district}). Wir sind ausschließlich in Berlin tätig – in allen Bezirken, ${business.hours}.`)]
 
     // FAQ shortcuts
     if (/preis|kosten|kostet|teuer|tarif/.test(low) && p.sizeSqm) { return [say(`Auf Basis Ihrer Angaben liegt der ungefähre Preis bei ${estimatePrice(p)[0]}–${estimatePrice(p)[1]} € pro Reinigung${estimateMonthly(p) ? ` (ca. ${estimateMonthly(p)![0]}–${estimateMonthly(p)![1]} € pro Monat)` : ''}. ${discountLine}${missingFields(p).length ? ' ' + this.askNext(p, greet) : ''}`, estimateUI(p))] }
@@ -328,7 +328,7 @@ export class ChatEngine {
       propertyType: 'Bitte wählen Sie: Büro, Praxis, Kita, Schule, Treppenhaus, Gewerbeobjekt, Halle/Lager, Wohnung oder Haus.', floorTypes: 'Bitte wählen Sie: Fliesen, Teppich, PVC, Parkett, Laminat, Stein oder Linoleum.',
       cleaningType: 'Bitte wählen Sie: Büro-/Unterhaltsreinigung, Grundreinigung, Umzugsreinigung oder Fensterreinigung.', frequency: 'Bitte wählen Sie: täglich, wöchentlich, alle 2 Wochen, monatlich oder einmalig.',
       timesPerPeriod: 'Bitte eine Zahl, z. B. „3× pro Woche“.', timeWindow: 'Bitte wählen Sie: früh, vormittags, nachmittags, abends oder flexibel.',
-      phone: 'Bitte eine Telefonnummer, z. B. +49 30 1234567.',
+      phone: 'Bitte eine Telefonnummer, z. B. +49 30 1234567 oder 0176 1234567.',
     }
     return h[f] ?? 'Das habe ich leider nicht verstanden – können Sie es noch einmal anders formulieren?'
   }
