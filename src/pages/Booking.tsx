@@ -7,7 +7,7 @@ import { Calendar } from '@/components/Calendar'
 import { WhatsAppIcon } from '@/components/WhatsAppButton'
 import { store, useStore, missingFields } from '@/lib/store'
 import { cityFromZip, cities } from '@/lib/data'
-import { estimatePrice, estimateDuration, estimateMonthly, withDiscount, cleaningsPerMonth } from '@/lib/pricing'
+import { estimatePrice, estimateDuration, estimateMonthly, withDiscount, cleaningsPerMonth, fmtRange, sqmRateText } from '@/lib/pricing'
 import { cleaningLabels, extraOptions, formatDateDE, frequencyLabels, propertyLabels, extraLabel, floorLabels, timeWindowLabels, frequencyText, isCommercial, commercialTypes } from '@/lib/labels'
 import { business, whatsappUrl, inServiceArea } from '@/lib/config'
 import { requestSummary } from '@/lib/summary'
@@ -147,13 +147,13 @@ function EstimateCard({ est, compact }: { est: [number, number]; compact: boolea
         <div className="text-[11px] font-bold tracking-[.2em] uppercase text-cyan-soft/80">Ungefährer Preis</div>
         <div className="mt-2 flex items-end gap-1.5 font-display">
           <AnimatePresence mode="popLayout"><motion.span key={est[0]} initial={{ y: 14, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -14, opacity: 0 }} className="text-4xl font-black">{est[0]}</motion.span></AnimatePresence>
-          <span className="text-xl font-bold pb-1">– {est[1]} €</span>
+          <span className="text-xl font-bold pb-1">{est[1] !== est[0] ? `– ${est[1]} ` : ''}€</span>
         </div>
-        <div className="text-xs text-white/70 mt-1">pro Reinigung · {business.pricePerSqm[0].toFixed(2).replace('.', ',')}–{business.pricePerSqm[1].toFixed(2).replace('.', ',')} €/m²{p.sizeSqm ? ` · ${p.sizeSqm} m²` : ''}</div>
-        {monthly && <div className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-sm"><span className="text-white/70">≈ monatlich</span> <b className="font-display">{monthly[0]}–{monthly[1]} €</b> <span className="text-white/60 text-xs">({cleaningsPerMonth(p)} Reinigungen)</span></div>}
+        <div className="text-xs text-white/70 mt-1">pro Reinigung · {sqmRateText()}/m²{p.sizeSqm ? ` · ${p.sizeSqm} m²` : ''}</div>
+        {monthly && <div className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-sm"><span className="text-white/70">≈ monatlich</span> <b className="font-display">{fmtRange(monthly)}</b> <span className="text-white/60 text-xs">({cleaningsPerMonth(p)} Reinigungen)</span></div>}
         <div className="mt-3 rounded-xl border border-amber-300/40 bg-amber-400/15 px-3 py-2.5 text-xs text-amber-100 flex gap-2">
           <BadgePercent size={16} className="shrink-0 mt-0.5 text-amber-300" />
-          <span><b>{business.directDiscount[0]}–{business.directDiscount[1]} % Rabatt</b>: Anfrage senden und direkt anrufen oder per WhatsApp schreiben → ca. <b>{disc[0]}–{disc[1]} €</b>.</span>
+          <span><b>{business.directDiscount[0]}–{business.directDiscount[1]} % Rabatt</b>: Anfrage senden und direkt anrufen oder per WhatsApp schreiben → ca. <b>{fmtRange(disc)}</b>.</span>
         </div>
         {!compact && <p className="mt-3 text-[11px] text-white/60">Alle Preise sind Richtwerte. {business.owner} bestätigt den Festpreis nach Prüfung Ihrer Angaben.</p>}
       </div>
@@ -358,12 +358,12 @@ function Success({ a }: { a: Appointment }) {
           <div className="mt-6 rounded-2xl border border-line bg-surface-strong p-4 text-sm">
             <div className="font-display font-bold text-lg">{formatDateDE(a.date, { weekday: true })} · {a.time} Uhr</div>
             <div className="text-muted mt-1">{a.customer.street}, {a.customer.zip} {a.customer.city}</div>
-            <div className="mt-2">Ungefähr {a.estimate[0]}–{a.estimate[1]} € pro Reinigung{monthly ? ` · ca. ${monthly[0]}–${monthly[1]} €/Monat` : ''}</div>
+            <div className="mt-2">Ungefähr {fmtRange(a.estimate)} pro Reinigung{monthly ? ` · ca. ${fmtRange(monthly)}/Monat` : ''}</div>
           </div>
 
           <div className="mt-6 rounded-2xl p-5 text-white text-start" style={{ background: 'linear-gradient(135deg, var(--ink-2), var(--ink))' }}>
             <div className="flex items-center gap-2 font-display font-bold text-lg"><BadgePercent size={20} className="text-amber-300" /> Jetzt {business.directDiscount[0]}–{business.directDiscount[1]} % sparen</div>
-            <p className="mt-2 text-sm text-white/80">Melden Sie sich direkt bei {business.owner} – per Anruf oder WhatsApp mit Ihrer Anfragenummer <b>{a.code}</b>. Sie erhalten dann Ihr Angebot mit Direkt-Rabatt: ca. <b>{disc[0]}–{disc[1]} €</b> statt {a.estimate[0]}–{a.estimate[1]} €.</p>
+            <p className="mt-2 text-sm text-white/80">Melden Sie sich direkt bei {business.owner} – per Anruf oder WhatsApp mit Ihrer Anfragenummer <b>{a.code}</b>. Sie erhalten dann Ihr Angebot mit Direkt-Rabatt: ca. <b>{fmtRange(disc)}</b> statt {fmtRange(a.estimate)}.</p>
             <div className="mt-4 flex flex-wrap gap-2.5">
               <a href={wa} target="_blank" rel="noopener noreferrer" className="btn text-white" style={{ background: 'linear-gradient(135deg, #25d366, #128c7e)' }}><WhatsAppIcon size={18} /> Per WhatsApp senden</a>
               <a href={`tel:${business.phoneTel}`} className="btn bg-white/10 border border-white/20 text-white hover:bg-white/20"><Phone size={18} /> {business.phoneDisplay}</a>

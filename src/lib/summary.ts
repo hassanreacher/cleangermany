@@ -1,6 +1,6 @@
 import type { Profile } from './types'
 import { cleaningLabels, extraLabel, floorLabels, frequencyText, propertyLabels, timeWindowLabels } from './labels'
-import { estimatePrice, estimateMonthly } from './pricing'
+import { estimatePrice, estimateMonthly, fmtRange } from './pricing'
 import { business } from './config'
 
 /** Plain-text summary of the request – used for the WhatsApp prefill and the AI context. */
@@ -16,7 +16,7 @@ export function requestSummary(p: Partial<Profile>, code?: string): string {
   if (p.street || p.city) lines.push(`• Adresse: ${[p.street, [p.zip, p.city].filter(Boolean).join(' ')].filter(Boolean).join(', ')}`)
   if (p.sizeSqm) {
     const e = estimatePrice(p); const m = estimateMonthly(p)
-    lines.push(`• Geschätzt: ${e[0]}–${e[1]} € pro Reinigung${m ? ` (ca. ${m[0]}–${m[1]} €/Monat)` : ''}`)
+    lines.push(`• Geschätzt: ${fmtRange(e)} pro Reinigung${m ? ` (ca. ${fmtRange(m)}/Monat)` : ''}`)
   }
   if (p.name) lines.push(`• Name: ${p.name}`)
   if (lines.length === 1) return `Hallo ${business.company}! Ich interessiere mich für eine Reinigung und hätte gern ein Angebot.`

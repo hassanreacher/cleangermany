@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import { sqmRateText } from '@/lib/pricing'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
 import { Reveal, TextReveal } from '@/components/motion'
 export const faqs = [
-  { q: 'Wie wird der Preis festgelegt?', a: 'Richtwert sind ca. 1,30–1,45 € pro m² und Reinigung. Sie geben Objektart, Fläche, Bodenarten und Rhythmus an – online oder im Chat – und sehen sofort den ungefähren Preis pro Reinigung und pro Monat. Inhaberin Julia Bethke prüft Ihre Angaben und bestätigt den Festpreis.' },
+  { q: 'Wie wird der Preis festgelegt?', a: `Richtwert sind ca. ${sqmRateText()} pro m² und Reinigung. Sie geben Objektart, Fläche, Bodenarten und Rhythmus an – online oder im Chat – und sehen sofort den ungefähren Preis pro Reinigung und pro Monat. Inhaberin Julia Bethke prüft Ihre Angaben und bestätigt den Festpreis.` },
   { q: 'Wie bekomme ich die 10–20 % Direkt-Rabatt?', a: 'Ganz einfach: Anfrage online senden und sich danach direkt per WhatsApp oder Anruf bei uns melden – mit Ihrer Anfragenummer. Sie erhalten dann Ihr Angebot mit 10–20 % Rabatt.' },
   { q: 'In welchen Gebieten sind Sie tätig?', a: 'Wir reinigen ausschließlich in Berlin – in allen Bezirken, von Lichtenrade bis Pankow. Unser Standort ist die Nuthestr. 49 c in 12307 Berlin.' },
   { q: 'Welche Objekte reinigen Sie?', a: 'Büros, Praxen, Kitas, Schulen, Treppenhäuser, Gewerbeobjekte sowie Hallen und Lager – und natürlich Wohnungen und Häuser. Die Reinigungsmittel stimmen wir auf Ihre Böden ab: Fliesen, Teppich, PVC, Parkett, Laminat, Stein oder Linoleum.' },

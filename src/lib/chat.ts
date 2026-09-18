@@ -1,5 +1,5 @@
 import { store, missingFields } from './store'
-import { estimatePrice, estimateDuration, estimateMonthly, withDiscount, cleaningsPerMonth } from './pricing'
+import { estimatePrice, estimateDuration, estimateMonthly, withDiscount, cleaningsPerMonth, fmtRange, sqmRateText } from './pricing'
 import { nextAvailable, freeSlots, todayISO } from './slots'
 import { cityFromZip } from './data'
 import { cleaningLabels, extraLabel, floorLabels, formatDateDE, frequencyLabels, frequencyText, propertyLabels, timeWindowLabels, weekdaysLong, commercialTypes } from './labels'
@@ -70,12 +70,11 @@ function context() {
   const today = todayISO()
   const missing = missingFields(s.profile).map(f => fieldNames[f])
   const own = s.appointments.filter(a => a.customer.email && a.customer.email === s.profile.email).slice(0, 3)
-  const [lo, hi] = business.pricePerSqm
   return {
     today: formatDateDE(today), weekday: weekdaysLong[new Date().getDay()], profile: profileSummary(s.profile), missing,
     loggedIn: !!s.user, appointments: own.map(a => `${a.code} am ${formatDateDE(a.date)} ${a.time} (${a.status})`).join('; '),
     business: `${business.company} (Inh. ${business.owner}), ${fullAddress}, Tel./WhatsApp ${business.phoneDisplay}. EINSATZGEBIET: ausschließlich Berlin (alle Bezirke, PLZ 10115–14199) – Anfragen außerhalb Berlins freundlich ablehnen.`,
-    pricing: `ca. ${lo.toFixed(2).replace('.', ',')}–${hi.toFixed(2).replace('.', ',')} € pro m² und Reinigung (Richtwert). Grund-/Umzugsreinigung intensiver (ca. ×1,7–1,9). DIREKT-RABATT: Anfrage online senden und sich danach direkt telefonisch oder per WhatsApp bei ${business.owner} melden → ${business.directDiscount[0]}–${business.directDiscount[1]} % Rabatt.`,
+    pricing: `ca. ${sqmRateText()} pro m² und Reinigung (Richtwert). Grund-/Umzugsreinigung intensiver (ca. ×1,7–1,9). DIREKT-RABATT: Anfrage online senden und sich danach direkt telefonisch oder per WhatsApp bei ${business.owner} melden → ${business.directDiscount[0]}–${business.directDiscount[1]} % Rabatt.`,
   }
 }
 
@@ -216,7 +215,7 @@ export class ChatEngine {
       if (!freeSlots(date!, s.appointments, s.blockedSlots).includes(time)) return [say('Dieser Termin ist leider nicht verfügbar. Diese Termine sind frei:', { type: 'slots', slots: slotsPayload() })]
       this.offlinePending = { kind: 'confirm', date: date!, time }
       const e = estimatePrice(p)
-      return [say(`Kurz zur Kontrolle: ${cleaningLabels[p.cleaningType as keyof typeof cleaningLabels] ?? 'Reinigung'} (${propertyLabels[p.propertyType as PropertyType] ?? 'Objekt'}, ${p.sizeSqm} m², ${frequencyText(p)}) – Start am ${formatDateDE(date!, { weekday: true })} um ${time} Uhr in ${p.street}, ${p.zip} ${p.city}. Ungefähr ${e[0]}–${e[1]} € pro Reinigung. Soll ich die Anfrage verbindlich senden? (ja/nein)`)]
+      return [say(`Kurz zur Kontrolle: ${cleaningLabels[p.cleaningType as keyof typeof cleaningLabels] ?? 'Reinigung'} (${propertyLabels[p.propertyType as PropertyType] ?? 'Objekt'}, ${p.sizeSqm} m², ${frequencyText(p)}) – Start am ${formatDateDE(date!, { weekday: true })} um ${time} Uhr in ${p.street}, ${p.zip} ${p.city}. Ungefähr ${fmtRange(e)} pro Reinigung. Soll ich die Anfrage verbindlich senden? (ja/nein)`)]
     }
 
     // absorb free text like "Büro, 300 qm, Fliesen, 3x pro Woche" (only when we are not waiting for a specific answer)
@@ -226,7 +225,7 @@ export class ChatEngine {
       const missing = missingFields(now)
       const e = now.sizeSqm ? estimatePrice(now) : null
       const m = now.sizeSqm ? estimateMonthly(now) : null
-      const priceLine = e ? `Ungefährer Preis: ${e[0]}–${e[1]} € pro Reinigung${m ? `, ca. ${m[0]}–${m[1]} € im Monat` : ''} – mit Direkt-Rabatt (WhatsApp/Anruf nach dem Absenden) ${business.directDiscount[0]}–${business.directDiscount[1]} % weniger. ` : ''
+      const priceLine = e ? `Ungefährer Preis: ${fmtRange(e)} pro Reinigung${m ? `, ca. ${fmtRange(m)} im Monat` : ''} – mit Direkt-Rabatt (WhatsApp/Anruf nach dem Absenden) ${business.directDiscount[0]}–${business.directDiscount[1]} % weniger. ` : ''
       if (!missing.length) { this.expectingField = null; return [say(`Danke, das habe ich notiert. ${priceLine}Wählen Sie bitte einen Termin für Start bzw. Besichtigung:`, { type: 'slots', slots: slotsPayload() })] }
       const out = [say(`Danke${greet ? ', ' + greet : ''}, das habe ich notiert! ${priceLine}${this.askNext(now, greet)}`, e ? estimateUI(now) : this.optionsUI())]
       if (e && this.optionsUI()) out.push(say('', this.optionsUI()))
@@ -238,8 +237,8 @@ export class ChatEngine {
     if (/wo seid|standort|adresse|anfahrt|wo sitzt|wo befindet/.test(low)) return [say(`Sie finden uns hier: ${business.company}, Inh. ${business.owner}, ${fullAddress} (${business.district}). Wir sind ausschließlich in Berlin tätig – in allen Bezirken, ${business.hours}.`)]
 
     // FAQ shortcuts
-    if (/preis|kosten|kostet|teuer|tarif/.test(low) && p.sizeSqm) { return [say(`Auf Basis Ihrer Angaben liegt der ungefähre Preis bei ${estimatePrice(p)[0]}–${estimatePrice(p)[1]} € pro Reinigung${estimateMonthly(p) ? ` (ca. ${estimateMonthly(p)![0]}–${estimateMonthly(p)![1]} € pro Monat)` : ''}. ${discountLine}${missingFields(p).length ? ' ' + this.askNext(p, greet) : ''}`, estimateUI(p))] }
-    if (/preis|kosten|kostet|teuer|tarif/.test(low)) return [say(`Wir rechnen ungefähr mit ${business.pricePerSqm[0].toFixed(2).replace('.', ',')}–${business.pricePerSqm[1].toFixed(2).replace('.', ',')} € pro m² und Reinigung – ein 300 m² Büro liegt z. B. bei ca. ${estimatePrice({ sizeSqm: 300 })[0]}–${estimatePrice({ sizeSqm: 300 })[1]} € pro Reinigung. ${discountLine} Für Ihren konkreten Preis: ` + this.askNext(p, greet), this.optionsUI())]
+    if (/preis|kosten|kostet|teuer|tarif/.test(low) && p.sizeSqm) { return [say(`Auf Basis Ihrer Angaben liegt der ungefähre Preis bei ${fmtRange(estimatePrice(p))} pro Reinigung${estimateMonthly(p) ? ` (ca. ${fmtRange(estimateMonthly(p)!)} pro Monat)` : ''}. ${discountLine}${missingFields(p).length ? ' ' + this.askNext(p, greet) : ''}`, estimateUI(p))] }
+    if (/preis|kosten|kostet|teuer|tarif/.test(low)) return [say(`Wir rechnen ungefähr mit ${sqmRateText()} pro m² und Reinigung – ein 300 m² Büro liegt z. B. bei ca. ${fmtRange(estimatePrice({ sizeSqm: 300 }))} pro Reinigung. ${discountLine} Für Ihren konkreten Preis: ` + this.askNext(p, greet), this.optionsUI())]
     if (/öffnungs|uhrzeit|wann.*erreich|erreichbar/.test(low)) return [say(`Wir reinigen ${business.hours} – für Büros, Praxen und Schulen gern auch früh morgens oder abends außerhalb Ihrer Öffnungszeiten. Anfragen können Sie jederzeit hier im Chat stellen.`)]
     if (/storn|absag|verschieb/.test(low)) return [say('Sie können Termine bis 24 Stunden vorher kostenlos stornieren oder verschieben – einfach hier im Chat, per WhatsApp oder telefonisch.')]
     if (/leistung|angebot|was.*(macht|bietet)|service|objekt/.test(low) && !this.expectingField) return [say(`Wir reinigen Büros, Praxen, Kitas, Schulen, Treppenhäuser, Gewerbeobjekte und Hallen/Lager – sowie Wohnungen und Häuser. Leistungen: Unterhalts-/Büroreinigung, Grundreinigung, Umzugsreinigung und Fensterreinigung, abgestimmt auf Ihre Böden (Fliesen, Teppich, PVC, Parkett, Stein …). Für welches Objekt darf ich ein Angebot vorbereiten?`, this.optionsUI('propertyType'))]
@@ -261,12 +260,12 @@ export class ChatEngine {
     const justSaved = this.expectingField
     if (justSaved === 'timesPerPeriod' || (justSaved === 'frequency' && now.frequency !== 'woechentlich' && now.frequency !== 'monatlich')) {
       const e = estimatePrice(now); const m = estimateMonthly(now)
-      if (missing.length) return [say(`Danke! Ungefährer Preis: ${e[0]}–${e[1]} € pro Reinigung${m ? `, ca. ${m[0]}–${m[1]} € im Monat` : ''} – mit Direkt-Rabatt entsprechend weniger. ` + this.askNext(now, greet), estimateUI(now)), ...(this.optionsUI() ? [say('', this.optionsUI())] : [])]
+      if (missing.length) return [say(`Danke! Ungefährer Preis: ${fmtRange(e)} pro Reinigung${m ? `, ca. ${fmtRange(m)} im Monat` : ''} – mit Direkt-Rabatt entsprechend weniger. ` + this.askNext(now, greet), estimateUI(now)), ...(this.optionsUI() ? [say('', this.optionsUI())] : [])]
     }
     if (missing.length) return [say(this.askNext(now, now.name ? now.name.split(' ')[0] : ''), this.optionsUI())]
     this.expectingField = null
     const e = estimatePrice(now)
-    return [say(`Perfekt, ich habe alles${now.name ? ', ' + now.name.split(' ')[0] : ''}! Ungefähr ${e[0]}–${e[1]} € pro Reinigung${estimateMonthly(now) ? ` (ca. ${estimateMonthly(now)![0]}–${estimateMonthly(now)![1]} €/Monat)` : ''}, Dauer ca. ${estimateDuration(now)} Std. Wählen Sie bitte einen Termin für Start bzw. Besichtigung:`, { type: 'slots', slots: slotsPayload() })]
+    return [say(`Perfekt, ich habe alles${now.name ? ', ' + now.name.split(' ')[0] : ''}! Ungefähr ${fmtRange(e)} pro Reinigung${estimateMonthly(now) ? ` (ca. ${fmtRange(estimateMonthly(now)!)}/Monat)` : ''}, Dauer ca. ${estimateDuration(now)} Std. Wählen Sie bitte einen Termin für Start bzw. Besichtigung:`, { type: 'slots', slots: slotsPayload() })]
   }
 
   private expectingField: keyof Profile | null = null
@@ -301,7 +300,7 @@ export class ChatEngine {
     const q: Record<string, string> = {
       name: 'Wie darf ich Sie ansprechen? Bitte nennen Sie mir Ihren Namen (bei Firmen gern auch den Firmennamen).',
       propertyType: 'Um welche Art von Objekt handelt es sich – Büro, Praxis, Kita, Schule, Treppenhaus, Gewerbeobjekt, Halle/Lager, Wohnung oder Haus?',
-      sizeSqm: 'Wie groß ist die zu reinigende Fläche ungefähr in Quadratmetern? (Daraus ergibt sich der Preis – ca. 1,30–1,45 € pro m².)',
+      sizeSqm: `Wie groß ist die zu reinigende Fläche ungefähr in Quadratmetern? (Daraus ergibt sich der Preis – ca. ${sqmRateText()} pro m².)`,
       floorTypes: 'Welche Bodenarten gibt es – Fliesen, Teppich, PVC, Parkett, Laminat, Stein oder Linoleum? Mehrere sind möglich.',
       rooms: commercial ? 'Wie viele Räume sollen gereinigt werden?' : 'Wie viele Zimmer hat das Objekt?',
       bathrooms: commercial ? 'Wie viele Sanitärräume / WCs gibt es?' : 'Wie viele Bäder sollen gereinigt werden?',

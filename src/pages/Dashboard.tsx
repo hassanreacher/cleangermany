@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { fmtRange } from '@/lib/pricing'
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts'
@@ -140,7 +141,7 @@ function Overview() {
           <ul className="mt-3 divide-y divide-line">{open.slice(0, 4).map(a => (
             <li key={a.id} className="py-3 flex items-center gap-3 text-sm">
               <div className="w-9 h-9 rounded-full grid place-items-center bg-amber-400/20 text-amber-600">{a.source === 'ki' ? <Bot size={16} /> : <Inbox size={16} />}</div>
-              <div className="flex-1 min-w-0"><div className="font-semibold truncate">{a.customer.name}</div><div className="text-xs text-muted truncate">{a.customer.sizeSqm} m² · {a.customer.city} · Spanne {a.estimate[0]}–{a.estimate[1]} €</div></div>
+              <div className="flex-1 min-w-0"><div className="font-semibold truncate">{a.customer.name}</div><div className="text-xs text-muted truncate">{a.customer.sizeSqm} m² · {a.customer.city} · Spanne {fmtRange(a.estimate)}</div></div>
               <Link to="/dashboard/anfragen" className="btn btn-dark btn-sm">Preis</Link>
             </li>))}</ul>
         </div>
@@ -184,7 +185,7 @@ function RequestCard({ a }: { a: Appointment }) {
       </div>
       {c.notes && <div className="mt-3 text-sm rounded-xl bg-amber-400/10 border border-amber-400/30 px-3 py-2">📝 {c.notes}</div>}
       <div className="mt-4 flex flex-wrap items-end gap-3 border-t border-line pt-4">
-        <div><label className="lbl">Festpreis (Spanne {a.estimate[0]}–{a.estimate[1]} €)</label><div className="relative"><input type="number" value={price} onChange={e => setPrice(+e.target.value)} className="field !w-[150px] pe-9 font-display font-bold" disabled={a.status === 'erledigt' || a.status === 'storniert'} /><span className="absolute end-4 top-1/2 -translate-y-1/2 text-muted">€</span></div></div>
+        <div><label className="lbl">Festpreis (Richtwert {fmtRange(a.estimate)})</label><div className="relative"><input type="number" value={price} onChange={e => setPrice(+e.target.value)} className="field !w-[150px] pe-9 font-display font-bold" disabled={a.status === 'erledigt' || a.status === 'storniert'} /><span className="absolute end-4 top-1/2 -translate-y-1/2 text-muted">€</span></div></div>
         <div><label className="lbl">Team</label><select value={teamSel} onChange={e => setTeamSel(e.target.value)} className="field !w-[170px]">{team.map(t => <option key={t.name}>{t.name}</option>)}</select></div>
         <div className="flex gap-2 ms-auto flex-wrap">
           {a.status === 'anfrage' && <button onClick={() => store.updateAppointment(a.id, { price, team: teamSel, status: 'angebot' })} className="btn btn-primary btn-sm"><Send size={14} /> Angebot senden</button>}

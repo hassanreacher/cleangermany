@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { fmtRange, sqmRateText } from '@/lib/pricing'
 import { AnimatePresence, motion } from 'framer-motion'
 import { MessageCircle, X, Send, Sparkles, CalendarCheck, Euro, RotateCcw, BadgePercent, Phone, Check } from 'lucide-react'
 import { ChatEngine, type ChatMsg } from '@/lib/chat'
@@ -23,7 +24,7 @@ export function ChatWidget() {
   useEffect(() => {
     if (open && msgs.length === 0) {
       const g = profile.name ? `Hallo ${profile.name.split(' ')[0]}! ` : 'Hallo! '
-      setMsgs([{ id: 'w', role: 'assistant', content: `${g}Ich bin Clea von ${business.company}. Sagen Sie mir einfach, was gereinigt werden soll – z. B. „Büro, 300 m², Fliesen, 3× pro Woche“ – und ich nenne Ihnen sofort einen ungefähren Preis (ca. ${business.pricePerSqm[0].toFixed(2).replace('.', ',')}–${business.pricePerSqm[1].toFixed(2).replace('.', ',')} €/m²) und stelle Ihre Anfrage zusammen. Tipp: Nach dem Absenden per WhatsApp oder Anruf melden = ${business.directDiscount[0]}–${business.directDiscount[1]} % Rabatt.` }])
+      setMsgs([{ id: 'w', role: 'assistant', content: `${g}Ich bin Clea von ${business.company}. Sagen Sie mir einfach, was gereinigt werden soll – z. B. „Büro, 300 m², Fliesen, 3× pro Woche“ – und ich nenne Ihnen sofort einen ungefähren Preis (ca. ${sqmRateText()}/m²) und stelle Ihre Anfrage zusammen. Tipp: Nach dem Absenden per WhatsApp oder Anruf melden = ${business.directDiscount[0]}–${business.directDiscount[1]} % Rabatt.` }])
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { list.current?.scrollTo({ top: list.current.scrollHeight, behavior: 'smooth' }) }, [msgs, busy])
@@ -158,9 +159,9 @@ function UiPart({ m, onPick }: { m: ChatMsg; onPick: (t: string) => void }) {
     const e = m.ui.estimate
     return (
       <div className="rounded-2xl border border-cyan/40 bg-cyan/10 px-4 py-3 text-sm space-y-1.5">
-        <div className="flex items-center gap-2"><Euro size={16} className="text-cyan-deep" /><b>{e.perCleaning[0]}–{e.perCleaning[1]} €</b> <span className="text-muted">pro Reinigung{e.sqm ? ` · ${e.sqm} m²` : ''}</span></div>
-        {e.monthly && <div className="text-muted ps-6">≈ {e.monthly[0]}–{e.monthly[1]} € pro Monat ({e.rhythm})</div>}
-        <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 ps-6 text-xs"><BadgePercent size={14} /> Mit Direkt-Rabatt ca. <b>{e.discounted[0]}–{e.discounted[1]} €</b></div>
+        <div className="flex items-center gap-2"><Euro size={16} className="text-cyan-deep" /><b>{fmtRange(e.perCleaning)}</b> <span className="text-muted">pro Reinigung{e.sqm ? ` · ${e.sqm} m²` : ''}</span></div>
+        {e.monthly && <div className="text-muted ps-6">≈ {fmtRange(e.monthly)} pro Monat ({e.rhythm})</div>}
+        <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 ps-6 text-xs"><BadgePercent size={14} /> Mit Direkt-Rabatt ca. <b>{fmtRange(e.discounted)}</b></div>
       </div>
     )
   }

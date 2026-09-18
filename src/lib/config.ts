@@ -19,8 +19,8 @@ export const business = {
   hours: 'Mo–Sa 08–18 Uhr',
   /** Service area: Berlin only (PLZ 10115–14199) */
   serviceArea: { name: 'Berlin', zipMin: 10115, zipMax: 14199 },
-  /** Approximate price per m² and cleaning (EUR) */
-  pricePerSqm: [1.3, 1.45] as [number, number],
+  /** Approximate price per m² and cleaning (EUR). Use two equal values for a single rate, two different values for a range. */
+  pricePerSqm: [0.75, 0.75] as [number, number],
   /** Discount when the customer sends the request AND contacts the owner directly (call / WhatsApp) */
   directDiscount: [10, 20] as [number, number],
   mapsQuery: 'Nuthestraße 49c, 12307 Berlin',

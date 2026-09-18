@@ -5,7 +5,7 @@ import { ArrowRight, Info, BadgePercent, Phone } from 'lucide-react'
 import { Reveal, TextReveal } from '@/components/motion'
 import { Chip, OptionCard } from '@/components/ui'
 import { WhatsAppIcon } from '@/components/WhatsAppButton'
-import { estimatePrice, estimateDuration, estimateMonthly, withDiscount, cleaningsPerMonth } from '@/lib/pricing'
+import { estimatePrice, estimateDuration, estimateMonthly, withDiscount, cleaningsPerMonth, fmtRange, sqmRateText } from '@/lib/pricing'
 import { cleaningLabels, floorLabels, frequencyLabels, propertyLabels, commercialTypes, frequencyText } from '@/lib/labels'
 import { store } from '@/lib/store'
 import { business, whatsappUrl } from '@/lib/config'
@@ -34,7 +34,7 @@ export function PriceCalculator() {
           <div>
             <Reveal><span className="eyebrow">Preisrechner</span></Reveal>
             <TextReveal text="Was kostet mein Glanz?" className="mt-3 text-3xl sm:text-4xl font-black" />
-            <Reveal delay={0.15}><p className="mt-3 text-muted">Ungefähr <b className="text-text">{business.pricePerSqm[0].toFixed(2).replace('.', ',')}–{business.pricePerSqm[1].toFixed(2).replace('.', ',')} € pro m²</b> und Reinigung. Objekt, Fläche und Rhythmus wählen – den Festpreis bestätigt {business.owner} nach Prüfung.</p></Reveal>
+            <Reveal delay={0.15}><p className="mt-3 text-muted">Ungefähr <b className="text-text">{sqmRateText()} pro m²</b> und Reinigung. Objekt, Fläche und Rhythmus wählen – den Festpreis bestätigt {business.owner} nach Prüfung.</p></Reveal>
 
             <div className="mt-8 space-y-7">
               <div>
@@ -81,10 +81,10 @@ export function PriceCalculator() {
                   <AnimatePresence mode="popLayout">
                     <motion.span key={est[0]} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }} transition={{ duration: 0.3 }} className="text-5xl sm:text-6xl font-black">{est[0]}</motion.span>
                   </AnimatePresence>
-                  <span className="text-2xl font-bold pb-1.5">– {est[1]} €</span>
+                  <span className="text-2xl font-bold pb-1.5">{est[1] !== est[0] ? `– ${est[1]} ` : ''}€</span>
                 </div>
                 <div className="mt-2 text-sm text-white/70">pro Reinigung · {frequencyText(profile).toLowerCase() || 'einmalig'} · ca. {dur} Std.</div>
-                {monthly && <div className="mt-4 rounded-xl bg-white/10 px-4 py-3 flex items-center justify-between"><span className="text-sm text-white/75">≈ pro Monat</span><b className="font-display text-xl">{monthly[0]}–{monthly[1]} €</b></div>}
+                {monthly && <div className="mt-4 rounded-xl bg-white/10 px-4 py-3 flex items-center justify-between"><span className="text-sm text-white/75">≈ pro Monat</span><b className="font-display text-xl">{fmtRange(monthly)}</b></div>}
                 <ul className="mt-5 space-y-2 text-sm text-white/85">
                   <li className="flex justify-between border-b border-white/10 pb-2"><span>{propertyLabels[prop]} · {sqm} m²</span><span>{cleaningLabels[type]}</span></li>
                   <li className="flex justify-between border-b border-white/10 pb-2"><span>Böden</span><span className="text-end">{floors.length ? floors.map(f => floorLabels[f]).join(', ') : 'keine gewählt'}</span></li>
@@ -92,7 +92,7 @@ export function PriceCalculator() {
                 </ul>
                 <div className="mt-5 rounded-2xl border border-amber-300/40 bg-amber-400/15 p-3.5 text-xs text-amber-100">
                   <div className="flex items-center gap-2 font-bold text-sm text-amber-200"><BadgePercent size={16} /> {business.directDiscount[0]}–{business.directDiscount[1]} % Direkt-Rabatt</div>
-                  <p className="mt-1">Anfrage senden und danach direkt anrufen oder per WhatsApp schreiben → ca. <b>{disc[0]}–{disc[1]} €</b> pro Reinigung.</p>
+                  <p className="mt-1">Anfrage senden und danach direkt anrufen oder per WhatsApp schreiben → ca. <b>{fmtRange(disc)}</b> pro Reinigung.</p>
                   <div className="mt-2.5 flex flex-wrap gap-2">
                     <a href={whatsappUrl(requestSummary(profile))} target="_blank" rel="noopener noreferrer" className="btn btn-sm text-white" style={{ background: 'linear-gradient(135deg, #25d366, #128c7e)' }}><WhatsAppIcon size={15} /> WhatsApp</a>
                     <a href={`tel:${business.phoneTel}`} className="btn btn-sm bg-white/10 border border-white/20 text-white hover:bg-white/20"><Phone size={15} /> Anrufen</a>

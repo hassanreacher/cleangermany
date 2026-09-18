@@ -4,14 +4,25 @@ import { business } from './config'
 /** Multiplier on the base m² rate for intensive one-off cleanings. */
 const intensity: Record<string, number> = { unterhalt: 1, buero: 1, fenster: 1, grund: 1.7, umzug: 1.9 }
 
-/** Approximate price range per cleaning in EUR – based on 1,30–1,45 € / m². The owner confirms the final price. */
+/** Formats a EUR amount in German style (no decimals for whole numbers). */
+export const fmtEur = (n: number) => n.toLocaleString('de-DE', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })
+/** "225 €" for a single value or "225–260 €" for a range. */
+export const fmtRange = ([a, b]: [number, number]) => (a === b ? `${fmtEur(a)} €` : `${fmtEur(a)}–${fmtEur(b)} €`)
+/** Price per m² as text, e.g. "0,75 €" or "1,30–1,45 €". */
+export function sqmRateText() {
+  const [lo, hi] = business.pricePerSqm
+  const f = (n: number) => n.toFixed(2).replace('.', ',')
+  return lo === hi ? `${f(lo)} €` : `${f(lo)}–${f(hi)} €`
+}
+
+/** Approximate price per cleaning in EUR – based on the m² rate in config. The owner confirms the final price. */
 export function estimatePrice(p: Partial<Profile>): [number, number] {
   const sqm = p.sizeSqm ?? 100
   const [lo, hi] = business.pricePerSqm
   const k = intensity[p.cleaningType || 'unterhalt'] ?? 1
   const extras = (p.extras?.length ?? 0) * 15
   const min = Math.max(49, Math.round(sqm * lo * k + extras))
-  const max = Math.max(min + 5, Math.round(sqm * hi * k + extras))
+  const max = Math.max(min, Math.round(sqm * hi * k + extras))
   return [min, max]
 }
 

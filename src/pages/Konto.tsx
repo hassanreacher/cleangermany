@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { fmtRange } from '@/lib/pricing'
 import { motion } from 'framer-motion'
 import { CalendarCheck, MapPin, Sparkles, LogOut, Check, X, MessageCircle, UserRound } from 'lucide-react'
 import { store, useStore, missingFields } from '@/lib/store'
@@ -52,7 +53,7 @@ export default function Konto() {
                     </div>
                     <div className="text-end">
                       <div className="text-xs text-muted">{a.price ? 'Festpreis' : 'Preisspanne'}</div>
-                      <div className="font-display font-black text-2xl">{a.price ? euro(a.price) : `${a.estimate[0]}–${a.estimate[1]} €`}</div>
+                      <div className="font-display font-black text-2xl">{a.price ? euro(a.price) : `${fmtRange(a.estimate)}`}</div>
                     </div>
                   </div>
                   {a.status === 'angebot' && (
