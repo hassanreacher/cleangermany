@@ -6,7 +6,7 @@
  *   order_assigned → team member + customer (admin only)
  *   order_status   → customer; a customer's own cancellation notifies the owner instead
  */
-import { getEnv, callerInfo, layout, orderTable, button, statusText, esc, fmtDate, OWNER, PHONE, WHATSAPP } from './_lib/mail'
+import { getEnv, callerInfo, layout, orderTable, button, statusText, esc, fmtDate, OWNER, PHONE, WHATSAPP } from './_lib/mail.js'
 
 type Req = { method?: string; body?: any; headers: Record<string, string | string[] | undefined> }
 type Res = { status: (c: number) => Res; json: (d: unknown) => void }

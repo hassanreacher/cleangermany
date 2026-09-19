@@ -6,7 +6,7 @@
  * POST { kind: 'review', review }                   → { ok: true }
  * Optional header Authorization: Bearer <supabase access token> links the record to the logged-in user.
  */
-import { getEnv, callerInfo, mailOrderCreated, mailReviewCreated } from './_lib/mail'
+import { getEnv, callerInfo, mailOrderCreated, mailReviewCreated } from './_lib/mail.js'
 
 type Req = { method?: string; body?: any; headers: Record<string, string | string[] | undefined> }
 type Res = { status: (c: number) => Res; json: (d: unknown) => void }
