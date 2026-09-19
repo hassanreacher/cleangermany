@@ -1,1 +1,1 @@
-{"root":["./vite.config.ts","./api/chat.ts","./api/notify.ts"],"version":"5.9.3"}
+{"root":["./vite.config.ts","./api/chat.ts","./api/notify.ts","./api/submit.ts","./api/_lib/mail.ts"],"version":"5.9.3"}

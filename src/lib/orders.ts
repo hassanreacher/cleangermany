@@ -16,27 +16,15 @@ export function notify(payload: Record<string, unknown>, accessToken?: string) {
 
 async function token() { return (await supabase.auth.getSession()).data.session?.access_token }
 
-/** Create an order from the wizard/chat profile. Works for guests and logged-in customers. */
+/** Create an order from the wizard/chat profile via the server function (works for guests and logged-in customers, sends the confirmation mails). */
 export async function createOrder(p: Profile, slot: { date: string; time: string } | null, source: 'web' | 'ki' = 'web'): Promise<OrderRow> {
-  const { data: s } = await supabase.auth.getSession()
-  const uid = s.session?.user.id ?? null
   let internal: number | null = null
   try { const q = quote(p); internal = q.needsInspection ? null : q.perVisitNet } catch { /* estimate is only a hint */ }
-  const row = {
-    customer_id: uid,
-    customer_name: p.name.trim(), customer_email: p.email.trim().toLowerCase(), customer_phone: p.phone.trim(),
-    property_type: p.propertyType, cleaning_type: p.cleaningType, size_sqm: p.sizeSqm, frequency: p.frequency || null, times_per_period: p.timesPerPeriod,
-    time_window: p.timeWindow || null, street: p.street, zip: p.zip, city: p.city, floor: p.floor,
-    details: {
-      floorTypes: p.floorTypes, dirt: p.dirt, access: p.access, rooms: p.rooms, bathrooms: p.bathrooms, desks: p.desks, showers: p.showers, kitchenSize: p.kitchenSize, wasteBins: p.wasteBins,
-      glassSqm: p.glassSqm, glassBothSides: p.glassBothSides, entrances: p.entrances, floorsCount: p.floorsCount, basement: p.basement, windows: p.windows, hours: p.hours, elevator: p.elevator, pets: p.pets, extras: p.extras,
-    },
-    notes: p.notes || null, preferred_date: slot?.date ?? null, preferred_time: slot?.time ?? null, source, internal_estimate: internal,
-  }
-  const { data, error } = await supabase.from('orders').insert(row).select(ORDER_COLS).single()
-  if (error) throw error
-  notify({ type: 'order_created', orderId: data.id })
-  return data as OrderRow
+  const t = await token()
+  const r = await fetch('/api/submit', { method: 'POST', headers: { 'content-type': 'application/json', ...(t ? { authorization: `Bearer ${t}` } : {}) }, body: JSON.stringify({ kind: 'order', profile: p, slot, source, internalEstimate: internal }) })
+  const data = await r.json().catch(() => ({}))
+  if (!r.ok || !data.order) throw new Error(data.error || `Anfrage konnte nicht gespeichert werden (${r.status}).`)
+  return data.order as OrderRow
 }
 
 /* ---------- customer ---------- */
@@ -126,9 +114,10 @@ export async function reviewStats(): Promise<{ avg: number; count: number } | nu
   return r && Number(r.review_count) > 0 ? { avg: Number(r.avg_rating), count: Number(r.review_count) } : null
 }
 export async function submitReview(r: { author_name: string; email: string; city: string; rating: number; text: string; order_id?: string | null }) {
-  const { data, error } = await supabase.from('reviews').insert({ ...r, email: r.email.toLowerCase() }).select('id').single()
-  if (error) throw error
-  notify({ type: 'review_created', reviewId: data.id })
+  const t = await token()
+  const res = await fetch('/api/submit', { method: 'POST', headers: { 'content-type': 'application/json', ...(t ? { authorization: `Bearer ${t}` } : {}) }, body: JSON.stringify({ kind: 'review', review: r }) })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok || !data.ok) throw new Error(data.error || `Bewertung konnte nicht gespeichert werden (${res.status}).`)
 }
 export async function allReviews(): Promise<ReviewRow[]> {
   const { data, error } = await supabase.from('reviews').select('id, order_id, author_name, email, city, rating, text, approved, created_at').order('created_at', { ascending: false })

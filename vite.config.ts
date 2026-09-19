@@ -1,10 +1,10 @@
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
 
 /**
- * Local dev shim for the Vercel serverless function in /api/chat.ts.
+ * Local dev shim for the Vercel serverless functions in /api/*.ts.
  * On Vercel the file is deployed automatically; here we mount the same
  * handler on the Vite dev server so `npm run dev` works end-to-end.
  */
@@ -12,9 +12,13 @@ function localApi(): Plugin {
   return {
     name: 'local-vercel-api',
     configureServer(server) {
-      server.middlewares.use('/api/chat', async (req, res) => {
+      // make server-side variables (SUPABASE_*, SMTP_*, GROQ_*) available to the handlers in dev
+      Object.assign(process.env, loadEnv(server.config.mode, process.cwd(), ''))
+      server.middlewares.use('/api', async (req, res) => {
         try {
-          const mod = await server.ssrLoadModule('/api/chat.ts')
+          const name = (req.url ?? '/').split('?')[0].replace(/^\//, '').split('/')[0]
+          if (!/^[a-z]+$/.test(name)) { res.statusCode = 404; res.end('not found'); return }
+          const mod = await server.ssrLoadModule(`/api/${name}.ts`)
           const chunks: Buffer[] = []
           for await (const c of req) chunks.push(c as Buffer)
           const raw = Buffer.concat(chunks).toString('utf8')
