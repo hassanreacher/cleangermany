@@ -6,6 +6,7 @@ import { Input } from '@/components/ui'
 import { Logo } from '@/components/Logo'
 import { NotConfigured, PageLoader } from '@/components/Loading'
 import { useAuth, homeForRole } from '@/lib/auth'
+import { store } from '@/lib/store'
 import { errorText } from '@/lib/supabase'
 
 type Mode = 'login' | 'signup' | 'reset' | 'newpw'
@@ -15,11 +16,12 @@ export default function Login() {
   const [params] = useSearchParams()
   const { user, role, loading, configured, signIn, signUp, resetPassword, updatePassword } = useAuth()
   const [mode, setMode] = useState<Mode>(params.get('reset') ? 'newpw' : params.get('mode') === 'signup' ? 'signup' : 'login')
-  const [email, setEmail] = useState('')
+  const draft = store.get() // name / e-mail / phone from the request form are kept after sending
+  const [email, setEmail] = useState(params.get('email') ?? draft.email ?? '')
   const [pw, setPw] = useState('')
   const [pw2, setPw2] = useState('')
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
+  const [name, setName] = useState(draft.name ?? '')
+  const [phone, setPhone] = useState(draft.phone ?? '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [info, setInfo] = useState(params.get('confirmed') ? 'E-Mail bestätigt – Sie können sich jetzt anmelden.' : '')
@@ -38,7 +40,7 @@ export default function Login() {
         if (pw.length < 8) throw new Error('Das Passwort muss mindestens 8 Zeichen haben.')
         if (pw !== pw2) throw new Error('Die Passwörter stimmen nicht überein.')
         const r = await signUp(email, pw, name, phone)
-        if (r.needsConfirmation) { setInfo('Fast fertig! Wir haben Ihnen eine Bestätigungs-Mail geschickt – bitte den Link darin anklicken und dann anmelden.'); setMode('login') }
+        if (r.needsConfirmation) { setInfo(`Fast fertig! Wir haben Ihnen eine Bestätigungs-Mail an ${email.trim()} geschickt – bitte den Link darin anklicken und dann anmelden. Ihre Anfrage wird automatisch Ihrem Konto zugeordnet.`); setMode('login') }
       } else if (mode === 'reset') { await resetPassword(email); setInfo('Wir haben Ihnen einen Link zum Zurücksetzen des Passworts geschickt.'); setMode('login') }
       else if (mode === 'newpw') {
         if (pw.length < 8) throw new Error('Das Passwort muss mindestens 8 Zeichen haben.')
@@ -50,7 +52,7 @@ export default function Login() {
 
   const titles: Record<Mode, [string, string]> = {
     login: ['Anmelden', 'Ihre Anfragen, Termine und Bewertungen an einem Ort.'],
-    signup: ['Konto erstellen', 'Kostenlos – Sie sehen den Status Ihrer Anfragen und können Bewertungen abgeben.'],
+    signup: ['Konto erstellen', params.get('from') === 'anfrage' ? 'Ihre Angaben sind schon eingetragen – nur noch ein Passwort wählen. Danach sehen Sie den Status Ihrer Anfrage jederzeit im Konto.' : 'Kostenlos – Sie sehen den Status Ihrer Anfragen und können Bewertungen abgeben.'],
     reset: ['Passwort vergessen', 'Wir senden Ihnen einen Link zum Zurücksetzen.'],
     newpw: ['Neues Passwort', 'Bitte ein neues Passwort wählen.'],
   }

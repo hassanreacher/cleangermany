@@ -87,7 +87,7 @@ export function errorText(e: unknown): string {
   if (/Email not confirmed/i.test(m)) return 'Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse (Link in der Bestätigungs-Mail).'
   if (/User already registered/i.test(m)) return 'Diese E-Mail ist bereits registriert – bitte anmelden.'
   if (/Password should be/i.test(m)) return 'Das Passwort muss mindestens 8 Zeichen haben.'
-  if (/rate limit/i.test(m)) return 'Zu viele Versuche – bitte kurz warten.'
+  if (/rate limit|too many requests/i.test(m)) return 'Der E-Mail-Versand ist gerade begrenzt – bitte in einigen Minuten erneut versuchen.'
   if (/Failed to fetch|NetworkError/i.test(m)) return 'Keine Verbindung zur Datenbank. Bitte Internetverbindung prüfen.'
   return m
 }

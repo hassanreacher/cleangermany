@@ -394,7 +394,7 @@ function Success({ o }: { o: OrderRow }) {
             </div>
           </div>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            {user ? <Link to="/konto" className="btn btn-primary">Zu meinen Anfragen</Link> : <Link to="/login?mode=signup" className="btn btn-primary">Konto anlegen & Status verfolgen</Link>}
+            {user ? <Link to="/konto" className="btn btn-primary">Zu meinen Anfragen</Link> : <Link to={`/login?mode=signup&from=anfrage&email=${encodeURIComponent(o.customer_email)}`} className="btn btn-primary">Konto anlegen & Status verfolgen</Link>}
             <Link to="/" className="btn btn-ghost">Zur Startseite</Link>
           </div>
         </motion.div>

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase, supabaseConfigured, type ProfileRow, type UserRole } from './supabase'
 
@@ -26,6 +26,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<ProfileRow | null>(null)
   const [loading, setLoading] = useState(supabaseConfigured)
 
+  const linkedFor = useRef<string | null>(null)
+  /** attach guest requests/reviews (same e-mail) to this account – server-side, idempotent */
+  const linkGuestData = useCallback(async (s: Session | null) => {
+    if (!s?.user || linkedFor.current === s.user.id) return
+    linkedFor.current = s.user.id
+    try { await fetch('/api/link', { method: 'POST', headers: { authorization: `Bearer ${s.access_token}` } }) } catch { /* ignore */ }
+  }, [])
+
   const loadProfile = useCallback(async (u: User | null) => {
     if (!u) { setProfile(null); return }
     const { data } = await supabase.from('profiles').select('id, email, full_name, phone, role, created_at').eq('id', u.id).maybeSingle()
@@ -42,16 +50,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(async ({ data }) => {
       if (!alive) return
       setSession(data.session)
+      await linkGuestData(data.session)
       await loadProfile(data.session?.user ?? null)
       if (alive) setLoading(false)
     })
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s)
       // defer the DB call – Supabase warns against awaiting inside the callback
-      setTimeout(() => { loadProfile(s?.user ?? null) }, 0)
+      setTimeout(async () => { await linkGuestData(s); await loadProfile(s?.user ?? null) }, 0)
     })
     return () => { alive = false; sub.subscription.unsubscribe() }
-  }, [loadProfile])
+  }, [loadProfile, linkGuestData])
 
   const value: AuthCtx = {
     session, user: session?.user ?? null, profile, role: profile?.role ?? null, loading, configured: supabaseConfigured,
