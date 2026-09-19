@@ -52,7 +52,7 @@ export function Location() {
                 </div>
                 <div className="mt-5 flex items-start gap-2 rounded-2xl bg-amber-400/15 border border-amber-300/30 px-3.5 py-3 text-xs text-amber-100">
                   <BadgePercent size={16} className="shrink-0 mt-0.5 text-amber-300" />
-                  <span><b>{business.directDiscount[0]}–{business.directDiscount[1]} % Direkt-Rabatt:</b> Anfrage online senden und danach direkt anrufen oder per WhatsApp schreiben.</span>
+                  <span><b>{business.directDiscount} % Direkt-Rabatt:</b> Anfrage online senden und danach direkt anrufen oder per WhatsApp schreiben.</span>
                 </div>
               </motion.div>
             </div>

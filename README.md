@@ -1,95 +1,73 @@
 # Glanzgeschwister · Präzise. Sicher. Zuverlässig.
 
-Logo: `src/components/Logo.tsx` (Wordmark als HTML/SVG, transparent, skalierbar) · `public/logo.svg` (Standalone-Datei) · `public/favicon.svg`.
+Website mit Anfrage-Assistent, Kundenkonto, Team-Bereich und Inhaber-Dashboard für **Glanzgeschwister, Inh. Julia Bethke, Nuthestr. 49 c, 12307 Berlin**.
+Alle Daten (Anfragen, Nutzer, Rollen, Zuweisungen, Bewertungen, gesperrte Zeitfenster) liegen in **Supabase** (Postgres + Auth + Realtime).
+Die Website zeigt **keine Preise** – sie sammelt alle Angaben, die Inhaberin erstellt das Angebot persönlich (das Preismodell aus
+`Cleaning_Pricing_Web_Package` dient im Dashboard nur als interne Kalkulationshilfe).
 
-Moderne, animierte React-Website für einen deutschen Reinigungsservice (Wohnung, Haus, Büro, Praxis) – inklusive
-Buchungs-Assistent, Kalender, Inhaber-Dashboard und KI-Assistentin **Clea** (Groq). Alles läuft **ohne Datenbank**:
-Profil und Termine werden im Browser (localStorage) gespeichert, Beispieldaten sind vorinstalliert.
+## Einrichtung (einmalig, ca. 15 Minuten)
 
-## Business & Konfiguration
+1. **Supabase-Projekt anlegen** (https://supabase.com, Region Frankfurt).
+2. **SQL ausführen:** Dashboard → *SQL Editor* → Inhalt von [`supabase/schema.sql`](supabase/schema.sql) einfügen → *Run*.
+   Das legt Tabellen, Rollen, Trigger, Sicherheitsregeln (RLS) und Funktionen an.
+3. **Eigene SMTP für Auth-Mails:** Supabase → *Authentication → SMTP Settings* → eigenen Mailserver eintragen
+   (z. B. GMX: `mail.gmx.net`, Port 587, Benutzer = E-Mail, Absender `Glanzgeschwister@gmx.de`).
+   Damit kommen Registrierungs-Bestätigungen und Passwort-Resets von Ihrer Adresse.
+   Unter *Authentication → URL Configuration* die Site-URL (`https://cleangermany.vercel.app`) und `…/login` als Redirect eintragen.
+4. **Umgebungsvariablen** (lokal in `.env`, auf Vercel unter *Settings → Environment Variables*) – Vorlage: [`.env.example`](.env.example):
+   - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (Supabase → *Project Settings → API*)
+   - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (nur Server – für die E-Mail-Funktion)
+   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `ADMIN_EMAIL`, `SITE_URL` (Anfrage-/Zuweisungs-/Bewertungs-Mails aus `api/notify.ts`)
+   - `GROQ_API_KEY` (KI-Assistentin Clea; ohne Key läuft ein regelbasierter Assistenz-Modus)
+5. **Admin freischalten:** auf der Website registrieren, E-Mail bestätigen, dann im SQL Editor:
+   ```sql
+   update public.profiles set role = 'admin' where email = 'glanzgeschwister@gmx.de';
+   ```
+6. **Team anlegen:** Teammitglieder registrieren sich selbst; im Dashboard → *Team & Nutzer* Rolle auf „Team“ setzen.
 
-Alle Firmendaten stehen zentral in `src/lib/config.ts` (Glanzgeschwister · Inh. Julia Bethke · Nuthestr. 49 c · 12307 Berlin):
-Telefon/WhatsApp **+49 176 20465997** (`whatsapp`, internationales Format ohne „+“), Einsatzgebiet **nur Berlin** (`serviceArea`), E-Mail, Öffnungszeiten, Preise siehe `src/lib/pricingConfig.ts`
-und **Direkt-Rabatt (10–20 %)**. Karte und Routen-Link nutzen `mapsQuery`.
+## Rollen & Bereiche
 
-## Preise
+| Rolle | Bereich | Kann |
+|---|---|---|
+| Gast | `/termin`, Chat | Anfrage senden (ohne Konto), Bewertung einreichen |
+| Kunde (`client`) | `/konto` | eigene Anfragen & Status sehen, zugewiesenes Team, stornieren, Profil, Bewertung nach Abschluss |
+| Team (`team`) | `/team` | zugewiesene Einsätze mit allen Details, Route, Kunde anrufen, „Einsatz starten“ / „Erledigt“ |
+| Admin (`admin`) | `/dashboard` | alle Anfragen, Status, Festpreis (intern), Teammitglied zuweisen, Notizen, Verlauf, Wochenkalender mit Sperrzeiten, Rollen verwalten, Bewertungen freigeben, KPIs |
 
-Das Preismodell stammt aus `Cleaning_Pricing_Web_Package` (Konfiguration in `src/lib/pricingConfig.ts`, Engine in `src/lib/pricing.ts`):
-Unterhaltsreinigung nach Zeitaufwand (Fläche ÷ Produktivität + Minuten je Arbeitsplatz/WC/Waschbecken/Dusche/Küche/Mülleimer) × Faktoren
-(Boden, Verschmutzung, Arbeitszeit, Zugang) × Stundensatz × Frequenzfaktor, mindestens der Mindestpreis je Einsatz. Treppenhaus nach
-Eingängen/Etagen/Aufzug/Keller/Flur/Fenster, Sonderleistungen (Grund, Intensiv, Bau, Glas, Garten, Außen) pro m²/Stunde mit Mindestpreisen.
-Alle Preise netto zzgl. 19 % MwSt., Kundenanzeige als Spanne (−5 %/+10 %, auf 5 € gerundet), 25 % Rabatt im ersten Monat, Sicherheitsgrenze
-24,50 €/produktive Stunde → „Preis nach Besichtigung“.
+Anmeldung leitet automatisch in den passenden Bereich. Gast-Anfragen werden beim späteren Registrieren mit derselben E-Mail dem Konto zugeordnet.
 
-## Angebotsanfrage (Formular & KI)
+## E-Mails
 
-Datenmodell angelehnt an den dynvon-Personalbedarfsrechner: **Objektart** (Büro, Praxis, Kita, Schule, Treppenhaus, Gewerbeobjekt,
-Halle/Lager, Wohnung, Haus), **Fläche in m²**, **Bodenarten** (Fliesen, Teppich, PVC, Parkett, Laminat, Stein, Linoleum – Mehrfachauswahl),
-Räume & Sanitärräume, Leistung, **Rhythmus** (täglich Mo–Fr / wöchentlich mit *n×* pro Woche / alle 2 Wochen / monatlich mit *n×* pro Monat /
-einmalig), bevorzugte Uhrzeit, Extras, Adresse, Kontakt. Der Preis wird als Richtwert pro Reinigung **und** pro Monat angezeigt,
-inklusive Preis mit Direkt-Rabatt. Nach dem Absenden erscheinen WhatsApp- (vorbefüllte Nachricht mit Anfragenummer) und Anruf-Buttons.
-Ein **schwebender WhatsApp-Button** (unten links) ist auf allen Kundenseiten sichtbar.
-
-## Features
-
-- **Standort-Sektion** mit eingebetteter Karte (Google Maps Embed, kein API-Key nötig), Glass-Overlay, animiertem Pin, Route/Anruf/WhatsApp.
-- **Startseite** mit transparent-animiertem Seifenblasen-Hintergrund (Canvas, reagiert auf Maus, Blasen platzen bei Klick),
-  Lenis-Smooth-Scrolling, Framer-Motion-Reveals, Vorher/Nachher-Wischer, Preisrechner, Ablauf, Kundenstimmen, FAQ.
-- **Full-Screen-Menü**: animierter Hamburger → X, kreisförmige Clip-Path-Enthüllung vom Button aus, GSAP-gestaffelte 3D-Links
-  mit Indexnummern, Kontakt/Social-Footer, Scroll-Lock, Esc schließt, RTL-tauglich, Light/Dark-Theme.
-- **Termin buchen** (`/termin`): 6-Schritte-Wizard – Ort (PLZ → Stadt automatisch, animierte Karte), Objekt (Slider mit
-  Flächen-Visualisierung, Zimmer/Bäder, Etage/Aufzug/Haustiere), Wünsche, Kontakt, Kalender mit freien Slots, Prüfung + Konfetti.
-- **Mein Konto** (`/konto`): Profil-Vollständigkeit, Termine, Angebot annehmen/ablehnen, stornieren.
-- **Dashboard** (`/dashboard`, Demo-Inhaber): KPIs, Umsatz- und Leistungsmix-Charts, Anfragen mit **Preisfestlegung**
-  (Ort, Fläche, Angaben des Kunden sichtbar → Festpreis → Angebot senden), Wochenkalender mit Sperrung von Zeitfenstern,
-  Kunden, Team, Einstellungen.
-- **Clea – KI-Chat** (Groq, `llama-3.3-70b-versatile`, Tool-Calling): kennt Firma, Preise pro m² und Direkt-Rabatt, versteht
-  Freitext wie „Büro, 300 qm, Fliesen, 3× pro Woche“, fragt fehlende Angaben **Schritt für Schritt** mit **Antwort-Chips** ab,
-  zeigt Preis pro Reinigung/Monat, freie Termine und sendet die Anfrage nach Bestätigung – mit WhatsApp/Anruf-Buttons für den Rabatt.
-  Ohne API-Key läuft ein vollständiger **Offline-Demo-Modus** mit derselben Logik.
-- Vollständig auf Deutsch, responsive (iPhone-Safe-Areas, 100dvh), Light/Dark, `prefers-reduced-motion`.
+| Ereignis | Empfänger | Absender |
+|---|---|---|
+| Registrierung / Passwort vergessen | Nutzer | Supabase Auth mit Ihrer SMTP |
+| Neue Anfrage | Inhaberin + Bestätigung an Kunde (mit 25 % WhatsApp-Hinweis) | `api/notify.ts` (Ihre SMTP) |
+| Teammitglied zugewiesen | Teammitglied + Kunde | `api/notify.ts` |
+| Statusänderung (Angebot, bestätigt, erledigt, storniert) | Kunde (bzw. Inhaberin bei Kunden-Storno) | `api/notify.ts` |
+| Neue Bewertung | Inhaberin (Freigabe im Dashboard) | `api/notify.ts` |
 
 ## Lokal starten
 
 ```bash
 npm install
-cp .env.example .env      # GROQ_API_KEY eintragen (optional)
-npm run dev               # http://localhost:5173  (API-Route /api/chat läuft lokal mit)
-npm run build             # Produktions-Build nach dist/
+cp .env.example .env      # Werte eintragen
+npm run dev               # http://localhost:5173
+npm run build
 ```
-
-## Deployment auf Vercel
-
-1. Repository in Vercel importieren (Framework: **Vite** wird automatisch erkannt).
-2. Environment Variable `GROQ_API_KEY` setzen (Key von https://console.groq.com). Optional `GROQ_MODEL`.
-3. Deploy. Die Serverless Function `api/chat.ts` proxied Anfragen an Groq – der Key bleibt serverseitig.
-
-Ohne `GROQ_API_KEY` funktioniert die Website inklusive Chat weiterhin (Offline-Demo-Modus, Hinweis im Chat-Header).
-
-## Demo-Zugänge
-
-| Rolle   | Login                              |
-|---------|------------------------------------|
-| Kunde   | beliebige E-Mail, z. B. `anna.schneider@example.de` |
-| Inhaber | `inhaber@clean-shine.de` (oder jede E-Mail mit „inhaber“/„admin“) |
-
-Auf `/login` gibt es Ein-Klick-Buttons für beide Rollen. „Demo zurücksetzen“ (Konto/Einstellungen) stellt die Beispieldaten wieder her.
 
 ## Struktur
 
 ```
-api/chat.ts            Vercel Serverless Function (Groq, Tools, System-Prompt)
-src/lib/chat.ts        Chat-Engine: Tool-Ausführung im Browser + Offline-Modus
-src/lib/store.ts       localStorage-Store (Profil, Termine, gesperrte Slots)
-src/lib/slots.ts       Verfügbarkeit (Mo–Sa 08–18 Uhr, 2-Stunden-Fenster)
-src/lib/config.ts      Firmendaten, WhatsApp, Preis/m², Rabatt
-src/lib/pricing.ts     Preis pro Reinigung / Monat, Rabatt, Dauer
-src/lib/summary.ts     Anfrage-Zusammenfassung (WhatsApp-Vorbefüllung)
-src/components/        Hintergrund, Menü, Navbar, Kalender, Chat-Widget, UI
-src/sections/          Startseiten-Abschnitte
-src/pages/             Home, Leistungen, Termin, Konto, Dashboard, Login, Rechtliches
+supabase/schema.sql        komplettes Datenbankschema (Tabellen, RLS, Trigger, RPCs)
+api/notify.ts              E-Mail-Versand (nodemailer, eigene SMTP)
+api/chat.ts                Groq-Proxy für Clea (Tools: Angaben speichern, Termine, Anfrage senden)
+src/lib/supabase.ts        Client + Typen
+src/lib/auth.tsx           Auth-Context (Session, Profil, Rolle)
+src/lib/orders.ts          Datenzugriff: Anfragen, Zuweisung, Bewertungen, Zeitfenster
+src/lib/store.ts           lokaler Formular-Entwurf (Wizard + Clea teilen sich die Daten)
+src/lib/pricing*.ts        interne Kalkulationshilfe (nur Dashboard)
+src/pages/                 Home, Leistungen, Termin (Wizard), Login, Konto, Team, Dashboard, Rechtliches
+src/components/Loading.tsx Lade-Animationen (Logo-Pulse, Skeletons)
 ```
 
-## Technik
-
-Vite 7 · React 19 · TypeScript · Tailwind CSS 4 · Framer Motion · GSAP · Lenis · Recharts · lucide-react · Groq API
+Technik: Vite 7 · React 19 · TypeScript · Tailwind CSS 4 · Framer Motion · Supabase JS · Recharts · lucide-react · Groq API · nodemailer

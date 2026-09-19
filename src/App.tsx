@@ -1,6 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
-import { business } from '@/lib/config'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ThemeProvider } from '@/components/theme'
 import { Background } from '@/components/Background'
@@ -9,6 +8,8 @@ import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
 import { ChatWidget } from '@/components/ChatWidget'
 import { WhatsAppButton } from '@/components/WhatsAppButton'
+import { PageLoader } from '@/components/Loading'
+import { AuthProvider } from '@/lib/auth'
 import Home from '@/pages/Home'
 import { Impressum, Datenschutz, NotFound } from '@/pages/Legal'
 
@@ -17,6 +18,7 @@ const Booking = lazy(() => import('@/pages/Booking'))
 const Login = lazy(() => import('@/pages/Login'))
 const Konto = lazy(() => import('@/pages/Konto'))
 const Dashboard = lazy(() => import('@/pages/Dashboard'))
+const Team = lazy(() => import('@/pages/Team'))
 
 function Pages() {
   const loc = useLocation()
@@ -25,15 +27,16 @@ function Pages() {
     <>
       <Navbar />
       <AnimatePresence mode="wait">
-        <motion.main key={loc.pathname} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
-          <Suspense fallback={<div className="min-h-[60vh] grid place-items-center pt-28"><div className="typing"><span /><span /><span /></div></div>}>
+        <motion.main key={loc.pathname.split('/')[1]} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
+          <Suspense fallback={<PageLoader label="Seite wird geladen …" />}>
             <Routes location={loc}>
               <Route path="/" element={<Home />} />
               <Route path="/leistungen" element={<Leistungen />} />
               <Route path="/termin" element={<Booking />} />
-              <Route path="/login" element={business.features.accounts ? <Login /> : <Navigate to="/" replace />} />
-              <Route path="/konto" element={business.features.accounts ? <Konto /> : <Navigate to="/" replace />} />
-              <Route path="/dashboard/*" element={business.features.accounts ? <Dashboard /> : <Navigate to="/" replace />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/konto" element={<Konto />} />
+              <Route path="/team" element={<Team />} />
+              <Route path="/dashboard/*" element={<Dashboard />} />
               <Route path="/impressum" element={<Impressum />} />
               <Route path="/datenschutz" element={<Datenschutz />} />
               <Route path="*" element={<NotFound />} />
@@ -51,12 +54,14 @@ function Pages() {
 export default function App() {
   return (
     <ThemeProvider>
-      <BrowserRouter>
-        <SmoothScroll>
-          <Background />
-          <Pages />
-        </SmoothScroll>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <SmoothScroll>
+            <Background />
+            <Pages />
+          </SmoothScroll>
+        </BrowserRouter>
+      </AuthProvider>
     </ThemeProvider>
   )
 }

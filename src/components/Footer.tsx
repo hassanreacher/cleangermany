@@ -11,7 +11,7 @@ export function Footer() {
         <div className="glass p-6 sm:p-10 grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
             <Logo size={26} />
-            <p className="text-sm text-muted mt-4 max-w-xs">Professionelle Reinigung für Büro, Praxis, Kita, Schule, Treppenhaus, Gewerbe und Zuhause – versichert, zuverlässig, mit Festpreis. Unterhaltsreinigung ab 39 € netto pro Einsatz.</p>
+            <p className="text-sm text-muted mt-4 max-w-xs">Professionelle Reinigung für Büro, Praxis, Kita, Schule, Treppenhaus, Gewerbe und Zuhause – versichert, zuverlässig, mit Festpreis.</p>
             <div className="flex flex-wrap gap-3 mt-5 text-xs font-semibold">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5"><ShieldCheck size={14} className="text-cyan-deep" /> Versichert</span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5"><Leaf size={14} className="text-cyan-deep" /> Öko-Mittel</span>
@@ -30,7 +30,9 @@ export function Footer() {
               <li><Link to="/#ablauf" className="hover:text-cyan-deep transition">So funktioniert’s</Link></li>
               <li><Link to="/#faq" className="hover:text-cyan-deep transition">FAQ</Link></li>
               <li><Link to="/#standort" className="hover:text-cyan-deep transition">Standort</Link></li>
-              <li><Link to="/termin" className="hover:text-cyan-deep transition">Termin buchen</Link></li>
+              <li><Link to="/termin" className="hover:text-cyan-deep transition">Angebot anfragen</Link></li>
+              <li><Link to="/konto" className="hover:text-cyan-deep transition">Mein Konto</Link></li>
+              <li><Link to="/team" className="hover:text-cyan-deep transition">Team-Login</Link></li>
               <li><Link to="/impressum" className="hover:text-cyan-deep transition">Impressum</Link></li>
               <li><Link to="/datenschutz" className="hover:text-cyan-deep transition">Datenschutz</Link></li>
             </ul>
@@ -49,7 +51,7 @@ export function Footer() {
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 py-6 text-xs text-muted">
           <span>© {new Date().getFullYear()} {business.company} · Inh. {business.owner}. Alle Rechte vorbehalten.</span>
-          <span>Demo-Website · Daten werden nur lokal im Browser gespeichert</span>
+          <span>Anfragen werden verschlüsselt übertragen und sicher gespeichert.</span>
         </div>
       </div>
     </footer>

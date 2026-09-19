@@ -194,6 +194,12 @@ label.lbl { display: block; font-size: 13px; font-weight: 600; color: var(--mute
 .map-frame { filter: saturate(.75) contrast(1.05); }
 :root[data-theme="dark"] .map-frame { filter: invert(.92) hue-rotate(180deg) saturate(.6) brightness(.9); }
 
+/* Skeleton shimmer for loading states */
+.skeleton { position: relative; overflow: hidden; background: var(--line); }
+.skeleton::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); animation: shimmer 1.4s infinite; }
+:root[data-theme="dark"] .skeleton::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent); }
+@keyframes shimmer { to { transform: translateX(100%); } }
+
 /* Scrollbars */
 .scroll-thin { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 

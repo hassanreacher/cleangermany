@@ -202,8 +202,8 @@ export function estimatePrice(p: Partial<Profile>): [number, number] { return qu
 export function estimateMonthly(p: Partial<Profile>): [number, number] | null { const q = quote(p); return q.recurring ? q.rangeMonthly : null }
 /** Range after the direct-contact discount (call / WhatsApp after sending the request). */
 export function withDiscount([a, b]: [number, number]): [number, number] {
-  const [d1, d2] = business.directDiscount
-  return [Math.round(a * (1 - d2 / 100)), Math.round(b * (1 - d1 / 100))]
+  const d = business.directDiscount
+  return [Math.round(a * (1 - d / 100)), Math.round(b * (1 - d / 100))]
 }
 export function estimateDuration(p: Partial<Profile>): number { return Math.min(8, Math.max(1, Math.round(quote(p).hoursPerVisit))) }
 /** Marketing text for the entry price. */

@@ -5,7 +5,7 @@ import { Moon, Sun, Languages, LogIn, LayoutDashboard, UserRound } from 'lucide-
 import { Logo } from './Logo'
 import { FullscreenMenu } from './FullscreenMenu'
 import { useTheme } from './theme'
-import { useStore } from '@/lib/store'
+import { useAuth, homeForRole } from '@/lib/auth'
 import { business } from '@/lib/config'
 
 export function Navbar() {
@@ -15,7 +15,7 @@ export function Navbar() {
   const [hidden, setHidden] = useState(false)
   const btn = useRef<HTMLButtonElement>(null)
   const { theme, toggle, dir, toggleDir } = useTheme()
-  const user = useStore(s => s.user)
+  const { user, role } = useAuth()
   const { scrollY } = useScroll()
   const last = useRef(0)
 
@@ -55,7 +55,7 @@ export function Navbar() {
               <button onClick={toggleDir} className="hidden sm:grid w-10 h-10 place-items-center rounded-full border border-line bg-surface hover:border-cyan transition" aria-label="Schreibrichtung umschalten (RTL/LTR)" title={dir === 'rtl' ? 'LTR' : 'RTL'}><Languages size={17} /></button>
               <button onClick={toggle} className="grid w-10 h-10 place-items-center rounded-full border border-line bg-surface hover:border-cyan transition" aria-label="Theme umschalten">{theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}</button>
               {!business.features.accounts ? null : user ? (
-                <Link to={user.role === 'inhaber' ? '/dashboard' : '/konto'} className="btn btn-dark btn-sm hidden sm:inline-flex">{user.role === 'inhaber' ? <LayoutDashboard size={16} /> : <UserRound size={16} />}{user.role === 'inhaber' ? 'Dashboard' : 'Mein Konto'}</Link>
+                <Link to={homeForRole(role)} className="btn btn-dark btn-sm hidden sm:inline-flex">{role === 'admin' ? <LayoutDashboard size={16} /> : <UserRound size={16} />}{role === 'admin' ? 'Dashboard' : role === 'team' ? 'Meine Einsätze' : 'Mein Konto'}</Link>
               ) : (
                 <Link to="/login" className="btn btn-ghost btn-sm hidden sm:inline-flex"><LogIn size={16} /> Anmelden</Link>
               )}

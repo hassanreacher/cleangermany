@@ -17,14 +17,14 @@ export const cleaningLabels: Record<CleaningType, string> = {
   glas: 'Glasreinigung', garten: 'Gartenarbeit', aussen: 'Außenreinigung (Hochdruck)',
 }
 export const cleaningDesc: Record<CleaningType, string> = {
-  unterhalt: 'Regelmäßig: Büro, Praxis, Kita, Schule, Laden, Treppenhaus oder Zuhause – Stundensatz ab 30 € netto',
-  grund: 'Einmalig, intensiv bis in die Ecken – 3,20 €/m², mind. 180 €',
-  intensiv: 'Gründlicher als die Unterhaltsreinigung – 2,40 €/m², mind. 150 €',
-  bauend: 'Bezugsfertig nach dem Bau – 4,00 €/m², mind. 250 €',
-  baugrob: 'Grobreinigung während/nach dem Bau – 2,50 €/m², mind. 220 €',
-  glas: 'Innen 2,20 €/m² Glas · beidseitig 3,60 €/m² – mind. 69 €',
-  garten: 'Rasen, Hecke, Laub, Unkraut – 34 €/Std., mind. 85 €',
-  aussen: 'Wege, Terrassen, Fassade, Garage, Solar – ab 2,50 €/m², mind. 120 €',
+  unterhalt: 'Regelmäßig: Büro, Praxis, Kita, Schule, Laden, Treppenhaus oder Zuhause',
+  grund: 'Einmalig, intensiv bis in die Ecken – ideal vor Neuvermietung',
+  intensiv: 'Gründlicher als die Unterhaltsreinigung, z. B. als Auffrischung',
+  bauend: 'Bezugsfertig nach dem Bau – Staub, Fenster, Sanitär',
+  baugrob: 'Grobreinigung während oder direkt nach dem Bau',
+  glas: 'Fenster, Schaufenster, Glastüren – innen oder beidseitig',
+  garten: 'Rasen, Hecke, Laub, Unkraut – Geräte bringen wir mit',
+  aussen: 'Hochdruck für Wege, Terrassen, Fassade, Garage, Solar',
 }
 /** Which services are one-off by nature (frequency is not asked). */
 export const oneOffTypes: CleaningType[] = ['grund', 'intensiv', 'bauend', 'baugrob', 'garten', 'aussen']
@@ -36,9 +36,9 @@ export const timeWindowLabels: Record<TimeWindow, string> = {
   frueh: 'Früh (06–08 Uhr)', vormittag: 'Vormittags (08–12 Uhr)', nachmittag: 'Nachmittags (12–17 Uhr)', abend: 'Abends (17–22 Uhr)', nacht: 'Nachts (22–06 Uhr)', wochenende: 'Wochenende', flexibel: 'Flexibel',
 }
 export const dirtLabels: Record<DirtLevel, string> = { leicht: 'Leicht', normal: 'Normal', mittel: 'Mittel', stark: 'Stark' }
-export const dirtDesc: Record<DirtLevel, string> = { leicht: 'Gepflegt, wenig Nutzung (−10 %)', normal: 'Übliche Nutzung', mittel: 'Viel Publikumsverkehr (+20 %)', stark: 'Lange nicht gereinigt (+45 %)' }
+export const dirtDesc: Record<DirtLevel, string> = { leicht: 'Gepflegt, wenig Nutzung', normal: 'Übliche Nutzung', mittel: 'Viel Publikumsverkehr', stark: 'Lange nicht gereinigt' }
 export const accessLabels: Record<Access, string> = { einfach: 'Einfach', standard: 'Standard', schwierig: 'Schwierig' }
-export const accessDesc: Record<Access, string> = { einfach: 'Ebenerdig, Schlüssel vorhanden', standard: 'Etage, Aufzug oder Anmeldung (+5 %)', schwierig: 'Viele Etagen ohne Aufzug, Sicherheitsbereich (+18 %)' }
+export const accessDesc: Record<Access, string> = { einfach: 'Ebenerdig, Schlüssel vorhanden', standard: 'Etage, Aufzug oder Anmeldung', schwierig: 'Viele Etagen ohne Aufzug, Sicherheitsbereich' }
 export const kitchenLabels: Record<KitchenSize, string> = { keine: 'Keine', klein: 'Klein (Teeküche)', mittel: 'Mittel', gross: 'Groß (Kantine)' }
 
 export const statusLabels: Record<AppointmentStatus, string> = {

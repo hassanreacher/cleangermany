@@ -19,7 +19,7 @@ export function WhatsAppIcon({ size = 24 }: { size?: number }) {
  * The prefilled message contains the customer's request summary when available.
  */
 export function WhatsAppButton() {
-  const profile = useStore(s => s.profile)
+  const profile = useStore()
   const { pathname } = useLocation()
   const [tip, setTip] = useState(false)
   useEffect(() => { const a = setTimeout(() => setTip(true), 4000); const b = setTimeout(() => setTip(false), 14000); return () => { clearTimeout(a); clearTimeout(b) } }, [])
@@ -33,13 +33,13 @@ export function WhatsAppButton() {
         className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full grid place-items-center text-white shadow-[0_18px_40px_-10px_rgba(37,211,102,.6)]" style={{ background: 'linear-gradient(135deg, #25d366, #128c7e)' }}>
         <span className="absolute inset-0 rounded-full animate-ping opacity-30" style={{ background: '#25d366', animationDuration: '2.4s' }} />
         <WhatsAppIcon size={30} />
-        <span className="absolute -top-1 -end-1 rounded-full bg-amber-400 text-ink text-[10px] font-black px-1.5 py-0.5 leading-none shadow">-{business.directDiscount[0]}–{business.directDiscount[1]}%</span>
+        <span className="absolute -top-1 -end-1 rounded-full bg-amber-400 text-ink text-[10px] font-black px-1.5 py-0.5 leading-none shadow">-{business.directDiscount}%</span>
       </motion.a>
       <AnimatePresence>
         {tip && (
           <motion.div initial={{ opacity: 0, x: -10, scale: 0.9 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="glass-strong rounded-2xl px-4 py-3 text-sm max-w-[220px] shadow-lg hidden sm:block">
             <b className="font-display">Direkt schreiben & sparen</b><br />
-            <span className="text-muted">Anfrage senden + WhatsApp/Anruf = {business.directDiscount[0]}–{business.directDiscount[1]} % Rabatt.</span>
+            <span className="text-muted">Anfrage senden + WhatsApp/Anruf = {business.directDiscount} % Rabatt.</span>
           </motion.div>
         )}
       </AnimatePresence>

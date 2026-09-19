@@ -1,17 +1,29 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react'
 import { freeSlots, fromISO, toISO, todayISO } from '@/lib/slots'
 import { months, weekdaysShort, formatDateDE } from '@/lib/labels'
-import { useStore } from '@/lib/store'
+import { bookedSlots } from '@/lib/orders'
+import { supabaseConfigured } from '@/lib/supabase'
+import { Skeleton } from './Loading'
 
-/** Month calendar showing available days (dot) + time slots for the selected day. */
+/** Month calendar showing available days (dot) + time slots for the selected day. Occupied slots come from the database. */
 export function Calendar({ value, onChange, compact = false }: { value: { date: string; time: string } | null; onChange: (v: { date: string; time: string } | null) => void; compact?: boolean }) {
-  const { appointments, blockedSlots } = useStore(s => ({ appointments: s.appointments, blockedSlots: s.blockedSlots }))
   const today = todayISO()
   const [cursor, setCursor] = useState(() => { const d = fromISO(value?.date ?? today); return { y: d.getFullYear(), m: d.getMonth() } })
   const [dir, setDir] = useState(1)
   const [selDate, setSelDate] = useState<string | null>(value?.date ?? null)
+  const [booked, setBooked] = useState<Set<string> | null>(null)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!supabaseConfigured) { setBooked(new Set()); return }
+    let alive = true
+    setBooked(null); setError('')
+    const from = toISO(new Date(cursor.y, cursor.m, 1)), to = toISO(new Date(cursor.y, cursor.m + 1, 0))
+    bookedSlots(from, to).then(s => { if (alive) setBooked(s) }).catch(e => { if (alive) { setBooked(new Set()); setError(String(e?.message ?? e)) } })
+    return () => { alive = false }
+  }, [cursor])
 
   const days = useMemo(() => {
     const first = new Date(cursor.y, cursor.m, 1)
@@ -22,7 +34,7 @@ export function Calendar({ value, onChange, compact = false }: { value: { date: 
     return cells
   }, [cursor])
 
-  const slotsFor = (iso: string) => freeSlots(iso, appointments, blockedSlots)
+  const slotsFor = (iso: string) => freeSlots(iso, booked ?? new Set())
   const move = (d: number) => { setDir(d); setCursor(c => { const dt = new Date(c.y, c.m + d, 1); return { y: dt.getFullYear(), m: dt.getMonth() } }) }
   const minMonth = cursor.y === fromISO(today).getFullYear() && cursor.m === fromISO(today).getMonth()
 
@@ -39,22 +51,26 @@ export function Calendar({ value, onChange, compact = false }: { value: { date: 
           <button type="button" onClick={() => move(1)} className="w-10 h-10 grid place-items-center rounded-full border border-line bg-surface-strong hover:border-cyan" aria-label="Nächster Monat"><ChevronRight size={18} className="rtl:rotate-180" /></button>
         </div>
         <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-bold text-muted mb-1.5">{weekdaysShort.map(d => <div key={d}>{d}</div>)}</div>
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div key={`${cursor.y}-${cursor.m}g`} initial={{ opacity: 0, x: 24 * dir }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 * dir }} transition={{ duration: 0.25 }} className="grid grid-cols-7 gap-1.5">
-            {days.map((iso, i) => {
-              if (!iso) return <div key={'e' + i} />
-              const free = slotsFor(iso).length > 0
-              const sel = selDate === iso
-              return (
-                <button type="button" key={iso} disabled={!free} onClick={() => { setSelDate(iso); onChange(null) }}
-                  className={`cal-day ${sel ? 'selected' : free ? 'free' : 'off'}`} aria-label={formatDateDE(iso, { weekday: true })}>
-                  {parseInt(iso.slice(-2))}
-                </button>
-              )
-            })}
-          </motion.div>
-        </AnimatePresence>
-        <div className="flex items-center gap-4 mt-3 text-xs text-muted"><span className="inline-flex items-center gap-1.5"><i className="w-2 h-2 rounded-full bg-cyan inline-block" /> frei</span><span className="opacity-60">grau = ausgebucht / geschlossen</span></div>
+        {booked === null ? (
+          <div className="grid grid-cols-7 gap-1.5">{Array.from({ length: 35 }).map((_, i) => <Skeleton key={i} className="aspect-square !rounded-[14px]" />)}</div>
+        ) : (
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div key={`${cursor.y}-${cursor.m}g`} initial={{ opacity: 0, x: 24 * dir }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 * dir }} transition={{ duration: 0.25 }} className="grid grid-cols-7 gap-1.5">
+              {days.map((iso, i) => {
+                if (!iso) return <div key={'e' + i} />
+                const free = slotsFor(iso).length > 0
+                const sel = selDate === iso
+                return (
+                  <button type="button" key={iso} disabled={!free} onClick={() => { setSelDate(iso); onChange(null) }}
+                    className={`cal-day ${sel ? 'selected' : free ? 'free' : 'off'}`} aria-label={formatDateDE(iso, { weekday: true })}>
+                    {parseInt(iso.slice(-2))}
+                  </button>
+                )
+              })}
+            </motion.div>
+          </AnimatePresence>
+        )}
+        <div className="flex items-center gap-4 mt-3 text-xs text-muted"><span className="inline-flex items-center gap-1.5"><i className="w-2 h-2 rounded-full bg-cyan inline-block" /> frei</span><span className="opacity-60">grau = belegt / geschlossen</span>{error && <span className="text-rose-500">Belegung konnte nicht geladen werden</span>}</div>
       </div>
       <div className="rounded-2xl border border-line bg-surface-strong p-4 min-h-[180px]">
         <div className="flex items-center gap-2 font-semibold text-sm mb-3"><Clock size={16} className="text-cyan-deep" />{selDate ? formatDateDE(selDate, { weekday: true }) : 'Bitte einen Tag wählen'}</div>
@@ -71,7 +87,7 @@ export function Calendar({ value, onChange, compact = false }: { value: { date: 
             </motion.div>
           )}
         </AnimatePresence>
-        {!selDate && <p className="text-xs text-muted">Termine sind in 2-Stunden-Fenstern zwischen 08:00 und 18:00 Uhr verfügbar, Montag bis Samstag.</p>}
+        {!selDate && <p className="text-xs text-muted">Termine sind in 2-Stunden-Fenstern zwischen 08:00 und 18:00 Uhr verfügbar, Montag bis Samstag. Der Termin gilt als Wunschtermin für Start bzw. kostenlose Besichtigung.</p>}
       </div>
     </div>
   )
