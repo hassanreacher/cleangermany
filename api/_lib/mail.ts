@@ -37,7 +37,8 @@ export function getEnv(headers: Record<string, string | string[] | undefined>): 
   // GMX (and most providers) only accept a From address that equals the authenticated mailbox
   const senderName = (SMTP_FROM && SMTP_FROM.includes('<') ? SMTP_FROM.split('<')[0].trim().replace(/^"|"$/g, '') : SMTP_FROM && !SMTP_FROM.includes('@') ? SMTP_FROM : '') || `${COMPANY} Team`
   const from = SMTP_USER ? `"${senderName}" <${SMTP_USER}>` : SMTP_FROM || `${COMPANY} <noreply@localhost>`
-  const adminTo = (ADMIN_EMAIL || SMTP_USER || '').trim() || from.replace(/.*<([^>]+)>.*/, '$1')
+  // ADMIN_EMAIL may hold several addresses, comma separated – all of them receive the activity notifications
+  const adminTo = (ADMIN_EMAIL || SMTP_USER || '').split(',').map(a => a.trim()).filter(Boolean).join(', ') || from.replace(/.*<([^>]+)>.*/, '$1')
   const admin = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } }) : null
   let send: Env['send'] = null, smtpMissing: string | null = null
   if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
@@ -102,10 +103,48 @@ export async function mailOrderCreated(env: Env, o: any) {
   const wa = `${WHATSAPP}?text=${encodeURIComponent(`Hallo ${COMPANY}, ich habe die Anfrage ${o.code} gesendet.`)}`
   await Promise.all([
     env.send(env.adminTo, `Neue Anfrage ${o.code}: ${cleaningLabel(o.cleaning_type)} · ${o.customer_name}`, layout('Neue Anfrage eingegangen', `${orderTable(o)}${button(`${env.site}/dashboard/anfragen`, 'Im Dashboard öffnen')}`, env.site)),
+    mailActivity(env, { who: o.customer_name, email: o.customer_email, phone: o.customer_phone, action: `hat eine Anfrage gesendet (${o.code})`, extra: [['Leistung', `${cleaningLabel(o.cleaning_type)} · ${rhythm(o)}`], ['Objekt', `${o.property_type} · ${o.size_sqm ?? '–'} m²`], ['Adresse', `${o.street ?? ''}, ${o.zip ?? ''} ${o.city ?? ''}`], ['Wunschtermin', `${fmtDate(o.preferred_date)}${o.preferred_time ? ' · ' + o.preferred_time + ' Uhr' : ''}`], ['Quelle', o.source === 'ki' ? 'Chat mit Clea' : 'Website-Formular']], link: `${env.site}/dashboard/anfragen`, linkLabel: 'Anfrage öffnen' }),
     env.send(o.customer_email, `Ihre Anfrage ${o.code} bei ${COMPANY}`, layout(`Vielen Dank, ${esc(String(o.customer_name).split(' ')[0])}!`, `<p>Ihre Anfrage ist bei uns eingegangen. ${esc(OWNER)} prüft Ihre Angaben und meldet sich innerhalb von 24 Stunden – gern auch für eine kostenlose Besichtigung. Danach erhalten Sie Ihr schriftliches Angebot.</p>${orderTable(o)}<p style="margin-top:18px;padding:14px;border-radius:12px;background:#fff7e0;border:1px solid #f5d98a"><b>${DISCOUNT} % Rabatt sichern:</b> Melden Sie sich jetzt direkt per <a href="${wa}" style="color:#1d4fb3">WhatsApp</a> oder telefonisch unter ${PHONE} mit Ihrer Anfragenummer <b>${esc(o.code)}</b>.</p><p style="font-size:12px;color:#5b7078">Den Status Ihrer Anfrage sehen Sie jederzeit unter <a href="${env.site}/konto" style="color:#1d4fb3">${env.site.replace(/^https?:\/\//, '')}/konto</a> (kostenloses Konto mit dieser E-Mail-Adresse).</p>`, env.site)),
   ])
 }
 export async function mailReviewCreated(env: Env, r: any) {
   if (!env.send) return
-  await env.send(env.adminTo, `Neue Bewertung (${r.rating}/5) von ${r.author_name}`, layout('Neue Bewertung wartet auf Freigabe', `<p>${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)} · ${esc(r.author_name)}${r.city ? ' · ' + esc(r.city) : ''}</p><p style="padding:12px;border-radius:12px;background:#f6fcfe">${esc(r.text)}</p>${button(`${env.site}/dashboard/bewertungen`, 'Freigeben')}`, env.site))
+  await Promise.all([
+    env.send(env.adminTo, `Neue Bewertung (${r.rating}/5) von ${r.author_name}`, layout('Neue Bewertung wartet auf Freigabe', `<p>${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)} · ${esc(r.author_name)}${r.city ? ' · ' + esc(r.city) : ''}</p><p style="padding:12px;border-radius:12px;background:#f6fcfe">${esc(r.text)}</p>${button(`${env.site}/dashboard/bewertungen`, 'Freigeben')}`, env.site)),
+    mailActivity(env, { who: r.author_name, email: r.email, action: `hat eine Bewertung abgegeben (${r.rating}/5)`, extra: [['Text', r.text]], link: `${env.site}/dashboard/bewertungen`, linkLabel: 'Bewertung freigeben' }),
+  ])
+}
+
+/* ---------------- activity notifications for the admin ---------------- */
+export interface Activity {
+  /** name of the person who acted */
+  who: string
+  email?: string | null
+  phone?: string | null
+  /** what they did, in German, e.g. "hat eine Anfrage gesendet" */
+  action: string
+  extra?: [string, string | null | undefined][]
+  link?: string
+  linkLabel?: string
+}
+
+/**
+ * One short e-mail per user action to every ADMIN_EMAIL address:
+ * "Anna Schneider hat eine Anfrage gesendet". Never throws – notifications must not break the action itself.
+ */
+export async function mailActivity(env: Env, a: Activity): Promise<boolean> {
+  if (!env.send) return false
+  const when = new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  const rows: [string, string][] = [['Wer', a.who || 'Unbekannt'], ['Aktion', a.action], ['Zeitpunkt', `${when} Uhr`]]
+  if (a.email) rows.splice(1, 0, ['E-Mail', a.email])
+  if (a.phone) rows.splice(2, 0, ['Telefon', a.phone])
+  for (const [k, v] of a.extra ?? []) if (v) rows.push([k, String(v)])
+  const table = `<table style="width:100%;border-collapse:collapse;font-size:14px">${rows.map(([k, v]) => `<tr><td style="padding:7px 0;color:#5b7078;width:34%;vertical-align:top;border-bottom:1px solid #eef3f5">${esc(k)}</td><td style="padding:7px 0;border-bottom:1px solid #eef3f5">${esc(v)}</td></tr>`).join('')}</table>`
+  try {
+    await env.send(env.adminTo, `${a.who || 'Ein Nutzer'} ${a.action}`, layout('Neue Aktivität auf der Website', `<p style="font-size:15px"><b>${esc(a.who || 'Ein Nutzer')}</b> ${esc(a.action)}.</p>${table}${a.link ? button(a.link, a.linkLabel ?? 'Im Dashboard öffnen') : ''}`, env.site))
+    return true
+  } catch (e) {
+    console.error('activity mail failed', (e as Error)?.message ?? e)
+    return false
+  }
 }

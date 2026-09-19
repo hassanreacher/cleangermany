@@ -41,13 +41,19 @@ Anmeldung leitet automatisch in den passenden Bereich. Gast-Anfragen werden beim
 
 ## E-Mails
 
-| Ereignis | Empfänger | Absender |
+Jede Nutzeraktion erzeugt zusätzlich eine kurze **Aktivitäts-Mail** an alle Adressen in `ADMIN_EMAIL`
+(kommagetrennt, aktuell `Moh.a.sharekh@gmail.com, Glanzgeschwister@gmx.de`) nach dem Muster
+„**Anna Schneider** hat eine Anfrage gesendet (GG-01008)“ mit Name, E-Mail, Telefon, Zeitpunkt und Details.
+
+| Ereignis | Empfänger | Funktion |
 |---|---|---|
 | Registrierung / Passwort vergessen | Nutzer | Supabase Auth mit Ihrer SMTP |
-| Neue Anfrage | Inhaberin + Bestätigung an Kunde (mit 25 % WhatsApp-Hinweis) | `api/notify.ts` (Ihre SMTP) |
-| Teammitglied zugewiesen | Teammitglied + Kunde | `api/notify.ts` |
-| Statusänderung (Angebot, bestätigt, erledigt, storniert) | Kunde (bzw. Inhaberin bei Kunden-Storno) | `api/notify.ts` |
-| Neue Bewertung | Inhaberin (Freigabe im Dashboard) | `api/notify.ts` |
+| **Registrierung** (Aktivität) | `ADMIN_EMAIL` – einmal pro Nutzer | `api/link.ts` |
+| Neue Anfrage | `ADMIN_EMAIL` (Details + Aktivität) + Bestätigung an Kunde | `api/submit.ts` |
+| Teammitglied zugewiesen | Teammitglied + Kunde + Aktivität an `ADMIN_EMAIL` | `api/notify.ts` |
+| Statusänderung (Angebot, bestätigt, in Arbeit, erledigt) | Kunde + Aktivität an `ADMIN_EMAIL` | `api/notify.ts` |
+| Stornierung durch Kunde | Aktivität an `ADMIN_EMAIL` | `api/notify.ts` |
+| Neue Bewertung | `ADMIN_EMAIL` (Freigabe-Link + Aktivität) | `api/submit.ts` |
 
 ## Lokal starten
 

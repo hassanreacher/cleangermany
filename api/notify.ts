@@ -6,7 +6,7 @@
  *   order_assigned → team member + customer (admin only)
  *   order_status   → customer; a customer's own cancellation notifies the owner instead
  */
-import { getEnv, callerInfo, layout, orderTable, button, statusText, esc, fmtDate, OWNER, PHONE, WHATSAPP } from './_lib/mail.js'
+import { getEnv, callerInfo, mailActivity, layout, orderTable, button, statusText, esc, fmtDate, OWNER, PHONE, WHATSAPP } from './_lib/mail.js'
 
 type Req = { method?: string; body?: any; headers: Record<string, string | string[] | undefined> }
 type Res = { status: (c: number) => Res; json: (d: unknown) => void }
@@ -36,10 +36,23 @@ export default async function handler(req: Req, res: Res) {
       if (o.assignee?.email) mails.push(env.send(o.assignee.email, `Neuer Einsatz ${o.code}: ${o.customer_name}, ${o.zip} ${o.city}`, layout('Neuer Einsatz für Sie', `<p>${esc(OWNER)} hat Ihnen einen Auftrag zugewiesen.</p>${orderTable(o)}${o.admin_notes ? `<p style="padding:12px;border-radius:12px;background:#e8f7fb"><b>Hinweis:</b> ${esc(o.admin_notes)}</p>` : ''}${button(`${env.site}/team`, 'Meine Einsätze öffnen')}`, env.site)))
       mails.push(env.send(o.customer_email, `Ihr Reinigungsteam steht fest – ${o.code}`, layout('Ihr Team ist eingeplant', `<p>Gute Nachrichten, ${first}: ${esc(o.assignee?.full_name ?? 'unser Team')} übernimmt Ihren Auftrag${o.preferred_date ? ` am ${fmtDate(o.preferred_date)}${o.preferred_time ? ' um ' + o.preferred_time + ' Uhr' : ''}` : ''}.</p>${orderTable(o)}<p style="font-size:12px;color:#5b7078">Fragen? ${PHONE} oder <a href="${WHATSAPP}" style="color:#1d4fb3">WhatsApp</a>.</p>`, env.site)))
     } else if (o.status === 'storniert' && !isStaff) {
-      mails.push(env.send(env.adminTo, `Anfrage ${o.code} vom Kunden storniert`, layout('Kunde hat storniert', orderTable(o), env.site)))
+      // the customer cancelled – the admin gets the activity notice below, no customer mail needed
     } else {
       mails.push(env.send(o.customer_email, `Ihre Anfrage ${o.code}: ${st}`, layout(`Status: ${esc(st)}`, `<p>Hallo ${first}, der Status Ihrer Anfrage hat sich geändert: <b>${esc(st)}</b>.</p>${o.status === 'angebot' ? `<p>${esc(OWNER)} hat Ihr Angebot vorbereitet und meldet sich mit den Details – für Rückfragen einfach antworten oder ${PHONE} anrufen.</p>` : ''}${o.status === 'erledigt' ? `<p>Wir hoffen, alles glänzt! Wir freuen uns über Ihre Bewertung unter <a href="${env.site}/konto" style="color:#1d4fb3">${env.site.replace(/^https?:\/\//, '')}/konto</a>.</p>` : ''}${orderTable(o)}`, env.site)))
     }
+    // activity notice for the admin address(es): who did what
+    const { data: actor } = await env.admin.from('profiles').select('full_name, phone').eq('id', caller.id).maybeSingle()
+    const actorName = actor?.full_name || caller.email || 'Ein Nutzer'
+    const actorRole = caller.role === 'admin' ? 'Administrator' : caller.role === 'team' ? 'Teammitglied' : 'Kunde'
+    const action = type === 'order_assigned'
+      ? `hat Anfrage ${o.code} an ${o.assignee?.full_name ?? 'ein Teammitglied'} zugewiesen`
+      : o.status === 'storniert' ? `hat Anfrage ${o.code} storniert` : `hat Anfrage ${o.code} auf „${st}“ gesetzt`
+    mails.push(mailActivity(env, {
+      who: actorName, email: caller.email, phone: actor?.phone, action,
+      extra: [['Rolle', actorRole], ['Kunde', `${o.customer_name} · ${o.customer_email}`], ['Objekt', `${o.property_type} · ${o.size_sqm ?? '–'} m² · ${o.zip ?? ''} ${o.city ?? ''}`], ['Termin', `${fmtDate(o.preferred_date)}${o.preferred_time ? ' · ' + o.preferred_time + ' Uhr' : ''}`]],
+      link: `${env.site}/dashboard/anfragen`, linkLabel: 'Anfrage öffnen',
+    }))
+
     await Promise.all(mails)
     return res.status(200).json({ ok: true })
   } catch (e) {
