@@ -11,7 +11,7 @@ export function Footer() {
         <div className="glass p-6 sm:p-10 grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
             <Logo size={26} />
-            <p className="text-sm text-muted mt-4 max-w-xs">Professionelle Reinigung für Büro, Praxis, Kita, Schule, Treppenhaus, Gewerbe und Zuhause – versichert, zuverlässig, mit Festpreis. Ab {business.pricePerSqm[0].toFixed(2).replace('.', ',')} €/m².</p>
+            <p className="text-sm text-muted mt-4 max-w-xs">Professionelle Reinigung für Büro, Praxis, Kita, Schule, Treppenhaus, Gewerbe und Zuhause – versichert, zuverlässig, mit Festpreis. Unterhaltsreinigung ab 39 € netto pro Einsatz.</p>
             <div className="flex flex-wrap gap-3 mt-5 text-xs font-semibold">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5"><ShieldCheck size={14} className="text-cyan-deep" /> Versichert</span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5"><Leaf size={14} className="text-cyan-deep" /> Öko-Mittel</span>

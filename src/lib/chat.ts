@@ -1,11 +1,11 @@
 import { store, missingFields } from './store'
-import { estimatePrice, estimateDuration, estimateMonthly, withDiscount, cleaningsPerMonth, fmtRange, sqmRateText } from './pricing'
+import { estimatePrice, estimateDuration, estimateMonthly, withDiscount, fmtRange, quote, customerMessage, firstMonthDiscountPercent, startingPriceText } from './pricing'
 import { nextAvailable, freeSlots, todayISO } from './slots'
 import { cityFromZip } from './data'
-import { cleaningLabels, extraLabel, floorLabels, formatDateDE, frequencyLabels, frequencyText, propertyLabels, timeWindowLabels, weekdaysLong, commercialTypes } from './labels'
+import { cleaningLabels, extraLabel, floorLabels, formatDateDE, frequencyLabels, frequencyText, propertyLabels, timeWindowLabels, weekdaysLong, commercialTypes, dirtLabels, accessLabels, kitchenLabels, oneOffTypes } from './labels'
 import { business, fullAddress, whatsappUrl } from './config'
 import { requestSummary } from './summary'
-import type { FloorType, Frequency, Profile, PropertyType, TimeWindow } from './types'
+import type { FloorType, Frequency, Profile, PropertyType, TimeWindow, CleaningType, DirtLevel, Access, KitchenSize } from './types'
 
 export interface ChatOption { label: string; value: string }
 export interface ChatUI {
@@ -29,7 +29,9 @@ type ApiMsg = { role: 'user' | 'assistant' | 'tool'; content: string | null; too
 const fieldNames: Record<keyof Profile, string> = {
   name: 'Name / Firma', email: 'E-Mail', phone: 'Telefon', street: 'Straße & Hausnummer', zip: 'PLZ', city: 'Ort', propertyType: 'Objektart',
   sizeSqm: 'Fläche in m²', floorTypes: 'Bodenarten', rooms: 'Räume', bathrooms: 'Sanitärräume / Bäder', floor: 'Etage', elevator: 'Aufzug', pets: 'Haustiere',
-  cleaningType: 'Reinigungsart', frequency: 'Rhythmus', timesPerPeriod: 'Reinigungen pro Woche/Monat', timeWindow: 'Bevorzugte Uhrzeit', extras: 'Extras', notes: 'Hinweise',
+  cleaningType: 'Leistung', frequency: 'Rhythmus', timesPerPeriod: 'Reinigungen pro Woche/Monat', timeWindow: 'Bevorzugte Uhrzeit', dirt: 'Verschmutzungsgrad', access: 'Zugang',
+  desks: 'Arbeitsplätze', showers: 'Duschen', kitchenSize: 'Küche', wasteBins: 'Mülleimer', glassSqm: 'Glasfläche m²', glassBothSides: 'Glas beidseitig', entrances: 'Eingänge', floorsCount: 'Etagen je Aufgang', basement: 'Keller', windows: 'Fenster', hours: 'Arbeitsstunden',
+  extras: 'Zusatzleistungen', notes: 'Hinweise',
 }
 
 /** Quick-reply options for select-type fields (shown as chips in the chat). */
@@ -37,11 +39,14 @@ export function optionsFor(f: keyof Profile, p: Profile): { options: ChatOption[
   switch (f) {
     case 'propertyType': return { options: [...commercialTypes, 'wohnung', 'haus'].map(k => ({ label: propertyLabels[k as PropertyType], value: propertyLabels[k as PropertyType] })) }
     case 'floorTypes': return { multi: true, options: (Object.keys(floorLabels) as FloorType[]).map(k => ({ label: floorLabels[k], value: floorLabels[k] })) }
-    case 'cleaningType': return { options: (['buero', 'unterhalt', 'grund', 'umzug', 'fenster'] as const).map(k => ({ label: cleaningLabels[k], value: cleaningLabels[k] })) }
+    case 'cleaningType': return { options: (Object.keys(cleaningLabels) as CleaningType[]).map(k => ({ label: cleaningLabels[k], value: cleaningLabels[k] })) }
+    case 'dirt': return { options: (Object.keys(dirtLabels) as DirtLevel[]).map(k => ({ label: dirtLabels[k], value: dirtLabels[k] })) }
+    case 'access': return { options: (Object.keys(accessLabels) as Access[]).map(k => ({ label: accessLabels[k], value: accessLabels[k] })) }
+    case 'kitchenSize': return { options: (Object.keys(kitchenLabels) as KitchenSize[]).map(k => ({ label: kitchenLabels[k], value: kitchenLabels[k] })) }
     case 'frequency': return { options: (Object.keys(frequencyLabels) as Frequency[]).map(k => ({ label: frequencyLabels[k], value: frequencyLabels[k] })) }
     case 'timesPerPeriod': { const n = p.frequency === 'monatlich' ? 3 : 6; const unit = p.frequency === 'monatlich' ? 'pro Monat' : 'pro Woche'; return { options: Array.from({ length: n }, (_, i) => ({ label: `${i + 1}× ${unit}`, value: `${i + 1}× ${unit}` })) } }
     case 'timeWindow': return { options: (Object.keys(timeWindowLabels) as TimeWindow[]).map(k => ({ label: timeWindowLabels[k], value: timeWindowLabels[k] })) }
-    case 'elevator': case 'pets': return { options: [{ label: 'Ja', value: 'ja' }, { label: 'Nein', value: 'nein' }] }
+    case 'elevator': case 'pets': case 'basement': case 'glassBothSides': return { options: [{ label: 'Ja', value: 'ja' }, { label: 'Nein', value: 'nein' }] }
     case 'sizeSqm': return { options: ['100 m²', '250 m²', '500 m²', '1.000 m²'].map(v => ({ label: v, value: v })) }
     default: return null
   }
@@ -59,6 +64,9 @@ function profileSummary(p: Profile) {
     if (k === 'cleaningType') s = cleaningLabels[v as keyof typeof cleaningLabels] ?? s
     if (k === 'frequency') s = frequencyText(p)
     if (k === 'timeWindow') s = timeWindowLabels[v as TimeWindow] ?? s
+    if (k === 'dirt') s = dirtLabels[v as DirtLevel] ?? s
+    if (k === 'access') s = accessLabels[v as Access] ?? s
+    if (k === 'kitchenSize') s = kitchenLabels[v as KitchenSize] ?? s
     if (typeof v === 'boolean') s = v ? 'ja' : 'nein'
     rows.push(`- ${fieldNames[k]}: ${s}`)
   })
@@ -74,7 +82,7 @@ function context() {
     today: formatDateDE(today), weekday: weekdaysLong[new Date().getDay()], profile: profileSummary(s.profile), missing,
     loggedIn: !!s.user, appointments: own.map(a => `${a.code} am ${formatDateDE(a.date)} ${a.time} (${a.status})`).join('; '),
     business: `${business.company} (Inh. ${business.owner}), ${fullAddress}, Tel./WhatsApp ${business.phoneDisplay}. EINSATZGEBIET: ausschließlich Berlin (alle Bezirke, PLZ 10115–14199) – Anfragen außerhalb Berlins freundlich ablehnen.`,
-    pricing: `ca. ${sqmRateText()} pro m² und Reinigung (Richtwert). Grund-/Umzugsreinigung intensiver (ca. ×1,7–1,9). DIREKT-RABATT: Anfrage online senden und sich danach direkt telefonisch oder per WhatsApp bei ${business.owner} melden → ${business.directDiscount[0]}–${business.directDiscount[1]} % Rabatt.`,
+    pricing: `Unterhaltsreinigung nach Zeitaufwand: Fläche ÷ Produktivität (Büro 300, Laden 290, Schule 280, Praxis 240, Kita 220 m²/Std.) + Minuten je Arbeitsplatz (0,75), WC (6,5 + Waschbecken 2,5), Dusche (5), Küche (8/12/18), Mülleimer (0,5); Faktoren Boden (Teppich/gemischt +8 %, Stein +12 %, Laminat +5 %), Verschmutzung (leicht −10 %, mittel +20 %, stark +45 %), Uhrzeit (abends +5 %, nachts +18 %, Wochenende +25 %), Zugang (Standard +5 %, schwierig +18 %); × Stundensatz 30–31,50 € netto × Frequenzfaktor (1× monatlich 1,15 … täglich 0,82); Mindestpreis je Einsatz 39–55 €. Treppenhaus: 15 € je Eingang + 4,50 € je Etage + Aufzug 5 € + Keller 8 € + 0,12 €/m² Flur + 2,50 € je Fenster, mind. 25 €. Sonderleistungen: Grundreinigung 3,20 €/m² (mind. 180 €), Intensiv 2,40 €/m² (150 €), Bauendreinigung 4 €/m² (250 €), Baugrob 2,50 €/m² (220 €), Glas innen 2,20 €/m² Glas / beidseitig 3,60 € (mind. 69 €), Garten 34 €/Std. (mind. 85 €), Außen/Hochdruck 2,50 €/m² (mind. 120 €). ALLE PREISE NETTO zzgl. 19 % MwSt. Kundenpreis immer als Spanne (−5 %/+10 %). Neukunden: 25 % Rabatt im ersten Monat bei regelmäßiger Reinigung. Der endgültige Festpreis wird nach kostenloser Objektbesichtigung festgelegt. DIREKT-RABATT: Anfrage online senden und sich danach direkt telefonisch oder per WhatsApp bei ${business.owner} melden → ${business.directDiscount[0]}–${business.directDiscount[1]} % Rabatt.`,
   }
 }
 
@@ -97,12 +105,13 @@ function execTool(name: string, args: any): { result: unknown; ui?: ChatUI } {
       const patch: Partial<Profile> = {}
       for (const [k, v] of Object.entries(args ?? {})) {
         if (v === undefined || v === null || v === '') continue
-        if (k === 'sizeSqm' || k === 'rooms' || k === 'bathrooms' || k === 'timesPerPeriod') (patch as any)[k] = Number(v)
+        if (['sizeSqm', 'rooms', 'bathrooms', 'timesPerPeriod', 'desks', 'showers', 'wasteBins', 'glassSqm', 'entrances', 'floorsCount', 'windows', 'hours'].includes(k)) (patch as any)[k] = Number(v)
         else if (k === 'extras' || k === 'floorTypes') (patch as any)[k] = Array.isArray(v) ? v : String(v).split(/,\s*/)
         else (patch as any)[k] = v
       }
       if (patch.zip && !patch.city) { const c = cityFromZip(patch.zip); if (c) patch.city = c }
       if (patch.frequency === 'taeglich' || patch.frequency === 'einmalig' || patch.frequency === 'zweiwoechentlich') patch.timesPerPeriod = null
+      if (patch.cleaningType && oneOffTypes.includes(patch.cleaningType)) { patch.frequency = 'einmalig'; patch.timesPerPeriod = null }
       store.updateProfile(patch)
       const missing = missingFields(store.get().profile).map(f => fieldNames[f])
       return { result: { saved: Object.keys(patch), missing, complete: !missing.length } }
@@ -113,9 +122,11 @@ function execTool(name: string, args: any): { result: unknown; ui?: ChatUI } {
     }
     case 'estimate_price': {
       const p = s.profile
-      const per = estimatePrice(p); const monthly = estimateMonthly(p); const disc = withDiscount(per)
+      const q = quote(p); const disc = withDiscount(q.rangeVisit)
       return {
-        result: { perCleaningMin: per[0], perCleaningMax: per[1], monthlyMin: monthly?.[0] ?? null, monthlyMax: monthly?.[1] ?? null, cleaningsPerMonth: monthly ? cleaningsPerMonth(p) : null, withDirectDiscountMin: disc[0], withDirectDiscountMax: disc[1], pricePerSqm: business.pricePerSqm, durationHours: estimateDuration(p), currency: 'EUR', note: 'Richtwert – Festpreis bestätigt die Inhaberin. Direkt-Rabatt 10–20 % bei Anruf/WhatsApp nach Absenden der Anfrage.' },
+        result: q.needsInspection
+          ? { needsInspection: true, service: q.serviceLabel, note: 'Kein automatischer Preis (Fläche außerhalb 20–5.000 m² oder Sicherheitsgrenze). Dem Kunden sagen: Preis nach kostenloser Besichtigung, Anfrage trotzdem aufnehmen.' }
+          : { service: q.serviceLabel, recurring: q.recurring, perVisitNetMin: q.rangeVisit[0], perVisitNetMax: q.rangeVisit[1], visitsPerMonth: q.visitsPerMonth, monthlyNetMin: q.recurring ? q.rangeMonthly[0] : null, monthlyNetMax: q.recurring ? q.rangeMonthly[1] : null, firstMonthNet: q.recurring ? Math.round(q.firstMonthNet) : null, firstMonthDiscountPercent: q.recurring ? firstMonthDiscountPercent : null, vatPercent: 19, monthlyGross: Math.round(q.monthlyGross), hoursPerVisit: q.hoursPerVisit, withDirectDiscountMin: disc[0], withDirectDiscountMax: disc[1], minimumApplied: q.minimumApplied, currency: 'EUR', note: customerMessage + ' Alle Preise netto. Direkt-Rabatt 10–20 % bei Anruf/WhatsApp nach Absenden der Anfrage.' },
         ui: estimateUI(p),
       }
     }
@@ -238,7 +249,7 @@ export class ChatEngine {
 
     // FAQ shortcuts
     if (/preis|kosten|kostet|teuer|tarif/.test(low) && p.sizeSqm) { return [say(`Auf Basis Ihrer Angaben liegt der ungefähre Preis bei ${fmtRange(estimatePrice(p))} pro Reinigung${estimateMonthly(p) ? ` (ca. ${fmtRange(estimateMonthly(p)!)} pro Monat)` : ''}. ${discountLine}${missingFields(p).length ? ' ' + this.askNext(p, greet) : ''}`, estimateUI(p))] }
-    if (/preis|kosten|kostet|teuer|tarif/.test(low)) return [say(`Wir rechnen ungefähr mit ${sqmRateText()} pro m² und Reinigung – ein 300 m² Büro liegt z. B. bei ca. ${fmtRange(estimatePrice({ sizeSqm: 300 }))} pro Reinigung. ${discountLine} Für Ihren konkreten Preis: ` + this.askNext(p, greet), this.optionsUI())]
+    if (/preis|kosten|kostet|teuer|tarif/.test(low)) return [say(`Wir kalkulieren nach Zeitaufwand und Stundensatz (ab 30 € netto): Unterhaltsreinigung ${startingPriceText()}, ein 300 m² Büro mit 20 Arbeitsplätzen liegt bei 3× pro Woche z. B. bei ca. ${fmtRange(estimatePrice({ sizeSqm: 300, propertyType: 'buero', cleaningType: 'unterhalt', frequency: 'woechentlich', timesPerPeriod: 3, desks: 20, bathrooms: 3, dirt: 'normal', access: 'standard', timeWindow: 'abend' }))} netto pro Einsatz. Sonderleistungen wie Grundreinigung (3,20 €/m²) oder Glas (ab 2,20 €/m²) rechnen wir pro m². Neukunden sparen 25 % im ersten Monat. ${discountLine} Für Ihren konkreten Preis: ` + this.askNext(p, greet), this.optionsUI())]
     if (/öffnungs|uhrzeit|wann.*erreich|erreichbar/.test(low)) return [say(`Wir reinigen ${business.hours} – für Büros, Praxen und Schulen gern auch früh morgens oder abends außerhalb Ihrer Öffnungszeiten. Anfragen können Sie jederzeit hier im Chat stellen.`)]
     if (/storn|absag|verschieb/.test(low)) return [say('Sie können Termine bis 24 Stunden vorher kostenlos stornieren oder verschieben – einfach hier im Chat, per WhatsApp oder telefonisch.')]
     if (/leistung|angebot|was.*(macht|bietet)|service|objekt/.test(low) && !this.expectingField) return [say(`Wir reinigen Büros, Praxen, Kitas, Schulen, Treppenhäuser, Gewerbeobjekte und Hallen/Lager – sowie Wohnungen und Häuser. Leistungen: Unterhalts-/Büroreinigung, Grundreinigung, Umzugsreinigung und Fensterreinigung, abgestimmt auf Ihre Böden (Fliesen, Teppich, PVC, Parkett, Stein …). Für welches Objekt darf ich ein Angebot vorbereiten?`, this.optionsUI('propertyType'))]
@@ -285,7 +296,10 @@ export class ChatEngine {
     const sq = low.match(/(\d{2,5})\s*(m²|m2|qm|quadratmeter)/); if (sq) patch.sizeSqm = parseInt(sq[1])
     const floors = parseFloors(low); if (floors.length) patch.floorTypes = floors
     const fr = parseFrequency(low); if (fr) { patch.frequency = fr.frequency; patch.timesPerPeriod = fr.timesPerPeriod }
-    const ct = parseCleaning(low); if (ct) patch.cleaningType = ct
+    const ct = parseCleaning(low); if (ct) { patch.cleaningType = ct; if (oneOffTypes.includes(ct)) { patch.frequency = 'einmalig'; patch.timesPerPeriod = null } }
+    const dt = parseDirt(low); if (dt) patch.dirt = dt
+    const ac = parseAccess(low); if (ac) patch.access = ac
+    const dk = low.match(/(\d+)\s*(arbeitsplätze|arbeitsplaetze|schreibtische|mitarbeiter)/); if (dk) patch.desks = parseInt(dk[1])
     const n = Object.keys(patch).length
     if (n) store.updateProfile(patch)
     return n
@@ -300,11 +314,15 @@ export class ChatEngine {
     const q: Record<string, string> = {
       name: 'Wie darf ich Sie ansprechen? Bitte nennen Sie mir Ihren Namen (bei Firmen gern auch den Firmennamen).',
       propertyType: 'Um welche Art von Objekt handelt es sich – Büro, Praxis, Kita, Schule, Treppenhaus, Gewerbeobjekt, Halle/Lager, Wohnung oder Haus?',
-      sizeSqm: `Wie groß ist die zu reinigende Fläche ungefähr in Quadratmetern? (Daraus ergibt sich der Preis – ca. ${sqmRateText()} pro m².)`,
+      sizeSqm: 'Wie groß ist die zu reinigende Fläche ungefähr in Quadratmetern? (Daraus berechnen wir die Arbeitszeit und den Preis.)',
       floorTypes: 'Welche Bodenarten gibt es – Fliesen, Teppich, PVC, Parkett, Laminat, Stein oder Linoleum? Mehrere sind möglich.',
       rooms: commercial ? 'Wie viele Räume sollen gereinigt werden?' : 'Wie viele Zimmer hat das Objekt?',
       bathrooms: commercial ? 'Wie viele Sanitärräume / WCs gibt es?' : 'Wie viele Bäder sollen gereinigt werden?',
-      cleaningType: 'Welche Leistung wünschen Sie – Büro-/Unterhaltsreinigung, Grundreinigung, Umzugsreinigung oder Fensterreinigung?',
+      cleaningType: 'Welche Leistung wünschen Sie – regelmäßige Unterhaltsreinigung, Grundreinigung, Intensivreinigung, Bauend-/Baugrobreinigung, Glasreinigung, Gartenarbeit oder Außenreinigung?',
+      dirt: 'Wie stark ist das Objekt verschmutzt – leicht, normal, mittel oder stark?',
+      access: 'Wie ist der Zugang – einfach (ebenerdig, Schlüssel), standard (Etage/Anmeldung) oder schwierig (viele Etagen ohne Aufzug, Sicherheitsbereich)?',
+      desks: 'Wie viele Arbeitsplätze bzw. Schreibtische gibt es?',
+      kitchenSize: 'Gibt es eine Küche oder Teeküche – keine, klein, mittel oder groß?',
       frequency: 'Wie oft sollen wir kommen – täglich (Mo–Fr), wöchentlich, alle 2 Wochen, monatlich oder einmalig?',
       timesPerPeriod: p.frequency === 'monatlich' ? 'Wie oft pro Monat – 1×, 2× oder 3×?' : 'Wie oft pro Woche – z. B. 1×, 2×, 3× oder 5×?',
       timeWindow: 'Zu welcher Zeit passt es am besten – früh (06–08 Uhr), vormittags, nachmittags, abends oder flexibel?',
@@ -325,7 +343,7 @@ export class ChatEngine {
       zip: 'Die Postleitzahl besteht aus 5 Ziffern, z. B. 12307.', sizeSqm: 'Bitte eine Zahl in m², z. B. 250.', rooms: 'Bitte eine Zahl, z. B. 8.', bathrooms: 'Bitte eine Zahl, z. B. 2.',
       elevator: 'Bitte antworten Sie mit ja oder nein.', pets: 'Bitte antworten Sie mit ja oder nein.', email: 'Bitte eine gültige E-Mail-Adresse, z. B. name@beispiel.de.',
       propertyType: 'Bitte wählen Sie: Büro, Praxis, Kita, Schule, Treppenhaus, Gewerbeobjekt, Halle/Lager, Wohnung oder Haus.', floorTypes: 'Bitte wählen Sie: Fliesen, Teppich, PVC, Parkett, Laminat, Stein oder Linoleum.',
-      cleaningType: 'Bitte wählen Sie: Büro-/Unterhaltsreinigung, Grundreinigung, Umzugsreinigung oder Fensterreinigung.', frequency: 'Bitte wählen Sie: täglich, wöchentlich, alle 2 Wochen, monatlich oder einmalig.',
+      cleaningType: 'Bitte wählen Sie: Unterhaltsreinigung, Grundreinigung, Intensivreinigung, Bauendreinigung, Baugrobreinigung, Glasreinigung, Gartenarbeit oder Außenreinigung.', dirt: 'Bitte wählen Sie: leicht, normal, mittel oder stark.', access: 'Bitte wählen Sie: einfach, standard oder schwierig.', frequency: 'Bitte wählen Sie: täglich, wöchentlich, alle 2 Wochen, monatlich oder einmalig.',
       timesPerPeriod: 'Bitte eine Zahl, z. B. „3× pro Woche“.', timeWindow: 'Bitte wählen Sie: früh, vormittags, nachmittags, abends oder flexibel.',
       phone: 'Bitte eine Telefonnummer, z. B. +49 30 1234567 oder 0176 1234567.',
     }
@@ -353,7 +371,11 @@ export class ChatEngine {
       case 'floor': { const fl = /erdgeschoss|eg\b|parterre/.test(low) ? (num ? `EG–${num[0]}` : 'EG') : num ? num[0] : t.trim(); store.updateProfile({ floor: fl }); const el = yes ? true : no ? false : null; if (el !== null && /aufzug|lift|fahrstuhl/.test(low)) store.updateProfile({ elevator: el }); return true }
       case 'elevator': if (!yes && !no) return false; store.updateProfile({ elevator: yes && !no }); return true
       case 'pets': if (!yes && !no && !/hund|katze/.test(low)) return false; store.updateProfile({ pets: (yes || /hund|katze/.test(low)) && !no }); return true
-      case 'cleaningType': { const m = parseCleaning(low); if (!m) return false; store.updateProfile({ cleaningType: m }); return true }
+      case 'cleaningType': { const m = parseCleaning(low); if (!m) return false; store.updateProfile({ cleaningType: m, ...(oneOffTypes.includes(m) ? { frequency: 'einmalig' as const, timesPerPeriod: null } : {}) }); return true }
+      case 'dirt': { const m = parseDirt(low); if (!m) return false; store.updateProfile({ dirt: m }); return true }
+      case 'access': { const m = parseAccess(low); if (!m) return false; store.updateProfile({ access: m }); return true }
+      case 'desks': if (!num) return false; store.updateProfile({ desks: parseInt(num[0]) }); return true
+      case 'kitchenSize': { const m = /kein|nein|ohne/.test(low) ? 'keine' : /klein|tee/.test(low) ? 'klein' : /mittel/.test(low) ? 'mittel' : /gro|kantine/.test(low) ? 'gross' : null; if (!m) return false; store.updateProfile({ kitchenSize: m }); return true }
       case 'frequency': { const m = parseFrequency(low); if (!m) return false; store.updateProfile(m); return true }
       case 'timesPerPeriod': { if (!num) return false; const n = parseInt(num[0]); if (n < 1 || n > 7) return false; store.updateProfile({ timesPerPeriod: n }); return true }
       case 'timeWindow': { const m = /früh|frueh|06|6 uhr|vor 8/.test(low) ? 'frueh' : /vormittag|morgen|08|8 uhr|9 uhr|10 uhr/.test(low) ? 'vormittag' : /nachmittag|mittag|13|14|15|16/.test(low) ? 'nachmittag' : /abend|nach (17|18)|17|18|19|20/.test(low) ? 'abend' : /flexib|egal|jederzeit/.test(low) ? 'flexibel' : null; if (!m) return false; store.updateProfile({ timeWindow: m }); return true }
@@ -389,8 +411,29 @@ function parseFloors(low: string): FloorType[] {
   if (/gemischt|verschieden|alles/.test(low) && !out.length) out.push('gemischt')
   return out
 }
-function parseCleaning(low: string) {
-  return /grund/.test(low) ? 'grund' as const : /umzug|endreinigung|übergabe/.test(low) ? 'umzug' as const : /fenster|glas/.test(low) ? 'fenster' as const : /büro|buero|praxis|gewerbe|objekt/.test(low) ? 'buero' as const : /unterhalt|normal|regelm|standard|laufend/.test(low) ? 'unterhalt' as const : null
+function parseCleaning(low: string): CleaningType | null {
+  if (/bauend|endreinigung nach|bezugsfertig/.test(low)) return 'bauend'
+  if (/baugrob|grobreinigung|rohbau/.test(low)) return 'baugrob'
+  if (/grund|umzug|tiefenrein/.test(low)) return 'grund'
+  if (/intensiv/.test(low)) return 'intensiv'
+  if (/fenster|glas|scheiben/.test(low)) return 'glas'
+  if (/garten|rasen|hecke|laub|unkraut/.test(low)) return 'garten'
+  if (/hochdruck|außenreinigung|aussenreinigung|fassade|terrasse|garage|solar/.test(low)) return 'aussen'
+  if (/unterhalt|regelm|laufend|wöchentlich|woechentlich|täglich|taeglich|monatlich|büroreinigung|bueroreinigung|praxisreinigung/.test(low)) return 'unterhalt'
+  return null
+}
+function parseDirt(low: string): DirtLevel | null {
+  if (/stark|sehr schmutzig|lange nicht|extrem/.test(low)) return 'stark'
+  if (/mittel|viel publikum|stärker/.test(low)) return 'mittel'
+  if (/leicht|gepflegt|wenig/.test(low)) return 'leicht'
+  if (/normal|üblich|durchschnitt/.test(low)) return 'normal'
+  return null
+}
+function parseAccess(low: string): Access | null {
+  if (/schwierig|kein aufzug|sicherheits|kompliziert/.test(low)) return 'schwierig'
+  if (/einfach|ebenerdig|schlüssel/.test(low)) return 'einfach'
+  if (/standard|normal|anmeldung|etage/.test(low)) return 'standard'
+  return null
 }
 function parseFrequency(low: string): Pick<Profile, 'frequency' | 'timesPerPeriod'> | null {
   const n = low.match(/(\d)\s*(x|×|mal)/)?.[1]

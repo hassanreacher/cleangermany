@@ -5,14 +5,24 @@ import { estimateDuration, estimatePrice } from './pricing'
 
 const KEY = 'clean-demo-state-v1'
 
+/** Older saved profiles used other cleaning-type / extra keys – map them onto the current pricing model. */
+const legacyType: Record<string, Profile['cleaningType']> = { buero: 'unterhalt', umzug: 'grund', fenster: 'glas' }
+const legacyExtras: Record<string, string> = { backofen: 'oven_inside', kuehlschrank: 'fridge_inside', sanitaer: 'deep_wc', fenster: '' , kueche: '', buegeln: '', balkon: '', keller: '', material: '' }
+function migrateProfile(p: Partial<Profile> | undefined): Profile {
+  const m = { ...emptyProfile, ...(p ?? {}) } as Profile
+  if (m.cleaningType && (m.cleaningType as string) in legacyType) m.cleaningType = legacyType[m.cleaningType as string]
+  m.extras = (m.extras ?? []).map(e => (e in legacyExtras ? legacyExtras[e] : e)).filter(Boolean)
+  return m
+}
+
 function load(): AppState {
   try {
     const raw = localStorage.getItem(KEY)
     if (raw) {
       const st = { blockedSlots: [], ...JSON.parse(raw) } as AppState
       // migrate profiles saved before the commercial fields existed
-      st.profile = { ...emptyProfile, ...st.profile }
-      st.appointments = (st.appointments ?? []).map(a => ({ ...a, customer: { ...emptyProfile, ...a.customer } }))
+      st.profile = migrateProfile(st.profile)
+      st.appointments = (st.appointments ?? []).map(a => ({ ...a, customer: migrateProfile(a.customer) }))
       return st
     }
   } catch { /* ignore */ }
@@ -73,13 +83,18 @@ export function useStore<T = AppState>(selector: (s: AppState) => T = s => s as 
 }
 
 /** Which profile fields are still missing for a booking, in the order the assistant asks for them. */
-export const requiredFields: (keyof Profile)[] = ['name', 'propertyType', 'sizeSqm', 'floorTypes', 'rooms', 'bathrooms', 'cleaningType', 'frequency', 'timesPerPeriod', 'timeWindow', 'street', 'zip', 'city', 'floor', 'elevator', 'pets', 'extras', 'phone', 'email']
+export const requiredFields: (keyof Profile)[] = ['name', 'propertyType', 'sizeSqm', 'cleaningType', 'frequency', 'timesPerPeriod', 'floorTypes', 'dirt', 'rooms', 'bathrooms', 'access', 'timeWindow', 'street', 'zip', 'city', 'floor', 'elevator', 'pets', 'extras', 'phone', 'email']
+const oneOff = new Set(['grund', 'intensiv', 'bauend', 'baugrob', 'garten', 'aussen'])
 export function missingFields(p: Profile): (keyof Profile)[] {
   return requiredFields.filter(f => {
     const v = p[f]
     if (f === 'extras' || f === 'notes') return false // optional
-    if (f === 'floorTypes') return !p.floorTypes?.length
+    if (f === 'floorTypes') return p.cleaningType === 'garten' || p.cleaningType === 'aussen' ? false : !p.floorTypes?.length
+    if (f === 'frequency') return oneOff.has(p.cleaningType) ? false : !p.frequency
     if (f === 'timesPerPeriod') return (p.frequency === 'woechentlich' || p.frequency === 'monatlich') && !p.timesPerPeriod
+    if (f === 'rooms') return p.propertyType === 'treppenhaus' || (p.propertyType && p.propertyType !== 'wohnung' && p.propertyType !== 'haus') ? false : !p.rooms
+    if (f === 'bathrooms') return p.propertyType === 'treppenhaus' || p.cleaningType === 'garten' || p.cleaningType === 'aussen' || p.cleaningType === 'glas' ? false : !p.bathrooms
+    if (f === 'access') return p.cleaningType && p.cleaningType !== 'unterhalt' ? false : !p.access
     // private households: pets matter, for commercial objects we skip the question
     if (f === 'pets' && p.propertyType && p.propertyType !== 'wohnung' && p.propertyType !== 'haus') return false
     return v === '' || v === null || v === undefined

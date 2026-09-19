@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { sqmRateText } from '@/lib/pricing'
+import { startingPriceText } from '@/lib/pricing'
 import { motion, useMotionValue, useScroll, useSpring, useTransform } from 'framer-motion'
 import { ArrowRight, MessageCircle, Star, CalendarCheck, ShieldCheck, Sparkles, ChevronDown } from 'lucide-react'
 import { Magnetic, TextReveal, ease } from '@/components/motion'
@@ -23,7 +23,7 @@ export function Hero() {
           <motion.span initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, ease }} className="eyebrow">Gewerbe- & Objektreinigung · Berlin</motion.span>
           <TextReveal as="h1" text="Sauberkeit, die man spürt." className="mt-5 text-[44px] leading-[1.02] sm:text-6xl lg:text-[76px] font-black" />
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.45, ease }} className="mt-6 max-w-xl text-lg text-muted leading-relaxed">
-            Büro, Praxis, Kita, Schule, Treppenhaus, Gewerbe oder Zuhause – wir bringen alles zum Glänzen. Ab <b className="text-text">{sqmRateText()}/m²</b>, Angebot in <b className="text-text">2 Minuten</b> online oder im Chat mit <b className="text-text">Clea</b>. Direkt melden = <b className="text-text">10–20 % Rabatt</b>.
+            Büro, Praxis, Kita, Schule, Treppenhaus, Gewerbe oder Zuhause – wir bringen alles zum Glänzen. Unterhaltsreinigung <b className="text-text">{startingPriceText()}</b>, Angebot in <b className="text-text">2 Minuten</b> online oder im Chat mit <b className="text-text">Clea</b>. Direkt melden = <b className="text-text">10–20 % Rabatt</b>.
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.6, ease }} className="mt-8 flex flex-wrap items-center gap-3">
             <Magnetic><Link to="/termin" className="btn btn-primary">Angebot anfragen <ArrowRight size={18} className="rtl:rotate-180" /></Link></Magnetic>

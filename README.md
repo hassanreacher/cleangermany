@@ -9,8 +9,17 @@ Profil und Termine werden im Browser (localStorage) gespeichert, Beispieldaten s
 ## Business & Konfiguration
 
 Alle Firmendaten stehen zentral in `src/lib/config.ts` (Glanzgeschwister · Inh. Julia Bethke · Nuthestr. 49 c · 12307 Berlin):
-Telefon/WhatsApp **+49 176 20465997** (`whatsapp`, internationales Format ohne „+“), Einsatzgebiet **nur Berlin** (`serviceArea`), E-Mail, Öffnungszeiten, **Preis pro m² (0,75 €)**
+Telefon/WhatsApp **+49 176 20465997** (`whatsapp`, internationales Format ohne „+“), Einsatzgebiet **nur Berlin** (`serviceArea`), E-Mail, Öffnungszeiten, Preise siehe `src/lib/pricingConfig.ts`
 und **Direkt-Rabatt (10–20 %)**. Karte und Routen-Link nutzen `mapsQuery`.
+
+## Preise
+
+Das Preismodell stammt aus `Cleaning_Pricing_Web_Package` (Konfiguration in `src/lib/pricingConfig.ts`, Engine in `src/lib/pricing.ts`):
+Unterhaltsreinigung nach Zeitaufwand (Fläche ÷ Produktivität + Minuten je Arbeitsplatz/WC/Waschbecken/Dusche/Küche/Mülleimer) × Faktoren
+(Boden, Verschmutzung, Arbeitszeit, Zugang) × Stundensatz × Frequenzfaktor, mindestens der Mindestpreis je Einsatz. Treppenhaus nach
+Eingängen/Etagen/Aufzug/Keller/Flur/Fenster, Sonderleistungen (Grund, Intensiv, Bau, Glas, Garten, Außen) pro m²/Stunde mit Mindestpreisen.
+Alle Preise netto zzgl. 19 % MwSt., Kundenanzeige als Spanne (−5 %/+10 %, auf 5 € gerundet), 25 % Rabatt im ersten Monat, Sicherheitsgrenze
+24,50 €/produktive Stunde → „Preis nach Besichtigung“.
 
 ## Angebotsanfrage (Formular & KI)
 
