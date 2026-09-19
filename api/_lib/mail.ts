@@ -34,13 +34,28 @@ export interface Env { admin: SupabaseClient | null; site: string; from: string;
 export function getEnv(headers: Record<string, string | string[] | undefined>): Env {
   const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, ADMIN_EMAIL, SITE_URL } = process.env
   const site = (SITE_URL || `https://${(headers['x-forwarded-host'] as string) || (headers.host as string) || 'cleangermany.vercel.app'}`).replace(/\/$/, '')
-  const from = SMTP_FROM || SMTP_USER || `${COMPANY} <noreply@localhost>`
-  const adminTo = ADMIN_EMAIL || from.replace(/.*<([^>]+)>.*/, '$1')
+  // GMX (and most providers) only accept a From address that equals the authenticated mailbox
+  const senderName = (SMTP_FROM && SMTP_FROM.includes('<') ? SMTP_FROM.split('<')[0].trim().replace(/^"|"$/g, '') : SMTP_FROM && !SMTP_FROM.includes('@') ? SMTP_FROM : '') || `${COMPANY} Team`
+  const from = SMTP_USER ? `"${senderName}" <${SMTP_USER}>` : SMTP_FROM || `${COMPANY} <noreply@localhost>`
+  const adminTo = (ADMIN_EMAIL || SMTP_USER || '').trim() || from.replace(/.*<([^>]+)>.*/, '$1')
   const admin = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } }) : null
   let send: Env['send'] = null, smtpMissing: string | null = null
   if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
-    const transport = nodemailer.createTransport({ host: SMTP_HOST, port: Number(SMTP_PORT || 587), secure: Number(SMTP_PORT) === 465, auth: { user: SMTP_USER, pass: SMTP_PASS } })
-    send = (to, subject, html) => transport.sendMail({ from, to, subject, html, replyTo: adminTo })
+    const port = Number(SMTP_PORT || 465)
+    const base = { host: SMTP_HOST, auth: { user: SMTP_USER, pass: SMTP_PASS }, connectionTimeout: 15000, greetingTimeout: 12000, socketTimeout: 20000 }
+    // primary: the configured port (465 = SSL/TLS), fallback: the other common port (587 = STARTTLS)
+    const primary = nodemailer.createTransport({ ...base, port, secure: port === 465 })
+    const fallbackPort = port === 465 ? 587 : 465
+    const fallback = nodemailer.createTransport({ ...base, port: fallbackPort, secure: fallbackPort === 465, requireTLS: fallbackPort === 587 })
+    send = async (to, subject, html) => {
+      const mail = { from, to, subject, html, replyTo: adminTo }
+      try { return await primary.sendMail(mail) } catch (e) {
+        const msg = String((e as Error)?.message ?? e)
+        if (/Invalid login|535|authentication/i.test(msg)) throw e // wrong credentials – retrying is pointless
+        console.error(`SMTP ${port} failed (${msg}) – retrying on ${fallbackPort}`)
+        return await fallback.sendMail(mail)
+      }
+    }
   } else smtpMissing = 'SMTP_HOST / SMTP_USER / SMTP_PASS fehlen – keine E-Mail versendet'
   return { admin, site, from, adminTo, send, smtpMissing }
 }

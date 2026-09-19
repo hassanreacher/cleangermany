@@ -17,7 +17,10 @@ Die Website zeigt **keine Preise** – sie sammelt alle Angaben, die Inhaberin e
 4. **Umgebungsvariablen** (lokal in `.env`, auf Vercel unter *Settings → Environment Variables*) – Vorlage: [`.env.example`](.env.example):
    - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (Supabase → *Project Settings → API*)
    - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (nur Server – für die E-Mail-Funktion)
-   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `ADMIN_EMAIL`, `SITE_URL` (Anfrage-/Zuweisungs-/Bewertungs-Mails aus `api/notify.ts`)
+   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `ADMIN_EMAIL`, `SITE_URL` (Anfrage-/Zuweisungs-/Status-/Bewertungs-Mails aus `api/submit.ts` und `api/notify.ts`).
+     GMX: Host `mail.gmx.net`, Port `465` (SSL/TLS) – der Code fällt automatisch auf `587` (STARTTLS) zurück. Wichtig: In den GMX-Einstellungen
+     unter *Einstellungen → POP3/IMAP Abruf* den **Zugriff über externe Programme aktivieren**, sonst antwortet GMX mit `535 Authentication credentials invalid`.
+     Die Absenderadresse wird immer auf `SMTP_USER` gesetzt (GMX akzeptiert keine abweichende Absenderadresse), `SMTP_FROM` liefert nur den Anzeigenamen.
    - `GROQ_API_KEY` (KI-Assistentin Clea; ohne Key läuft ein regelbasierter Assistenz-Modus)
 5. **Admin freischalten:** auf der Website registrieren, E-Mail bestätigen, dann im SQL Editor:
    ```sql
