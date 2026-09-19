@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { LogIn, UserPlus, KeyRound, MailCheck, ArrowLeft } from 'lucide-react'
@@ -7,7 +7,7 @@ import { Logo } from '@/components/Logo'
 import { NotConfigured, PageLoader } from '@/components/Loading'
 import { useAuth, homeForRole } from '@/lib/auth'
 import { store } from '@/lib/store'
-import { errorText } from '@/lib/supabase'
+import { errorText, supabase } from '@/lib/supabase'
 
 type Mode = 'login' | 'signup' | 'reset' | 'newpw'
 
@@ -25,9 +25,10 @@ export default function Login() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [info, setInfo] = useState(params.get('confirmed') ? 'E-Mail bestätigt – Sie können sich jetzt anmelden.' : '')
+  const justRegistered = useRef(false)
 
   // already logged in → go to the role home (except when setting a new password)
-  useEffect(() => { if (!loading && user && role && mode !== 'newpw') nav(homeForRole(role), { replace: true }) }, [user, role, loading, mode, nav])
+  useEffect(() => { if (!loading && user && role && mode !== 'newpw' && !justRegistered.current) nav(homeForRole(role), { replace: true }) }, [user, role, loading, mode, nav])
 
   if (!configured) return <section className="pt-36 pb-20"><div className="container-x"><NotConfigured /></div></section>
   if (loading) return <PageLoader label="Anmeldung wird geprüft …" />
@@ -39,8 +40,16 @@ export default function Login() {
       else if (mode === 'signup') {
         if (pw.length < 8) throw new Error('Das Passwort muss mindestens 8 Zeichen haben.')
         if (pw !== pw2) throw new Error('Die Passwörter stimmen nicht überein.')
+        justRegistered.current = true
         const r = await signUp(email, pw, name, phone)
-        if (r.needsConfirmation) { setInfo(`Fast fertig! Wir haben Ihnen eine Bestätigungs-Mail an ${email.trim()} geschickt – bitte den Link darin anklicken und dann anmelden. Ihre Anfrage wird automatisch Ihrem Konto zugeordnet.`); setMode('login') }
+        // registration complete → no auto-login: back to the login form with the e-mail prefilled
+        if (!r.needsConfirmation) await supabase.auth.signOut()
+        setPw(''); setPw2('')
+        setInfo(r.needsConfirmation
+          ? `Fast fertig! Wir haben Ihnen eine Bestätigungs-Mail an ${email.trim()} geschickt – bitte den Link darin anklicken und dann anmelden.`
+          : 'Registrierung abgeschlossen! Bitte melden Sie sich jetzt mit Ihrer E-Mail und Ihrem Passwort an. Ihre Anfragen werden automatisch Ihrem Konto zugeordnet.')
+        setMode('login')
+        setTimeout(() => { justRegistered.current = false }, 1500)
       } else if (mode === 'reset') { await resetPassword(email); setInfo('Wir haben Ihnen einen Link zum Zurücksetzen des Passworts geschickt.'); setMode('login') }
       else if (mode === 'newpw') {
         if (pw.length < 8) throw new Error('Das Passwort muss mindestens 8 Zeichen haben.')
